@@ -1,0 +1,16 @@
+{
+  "totalSeats": 234,
+  "reportedSeats": 194,
+  "turnout": 71.8,
+  "lastUpdated": "2026-05-01 18:15 IST",
+  "leadingParties": [
+    { "name": "DMK+", "seats": 126, "momentum": 0.76 },
+    { "name": "AIADMK+", "seats": 68, "momentum": -0.34 },
+    { "name": "Others", "seats": 20, "momentum": 0.05 }
+  ],
+  "voteShare": [
+    { "party": "DMK+", "share": 42.5 },
+    { "party": "AIADMK+", "share": 35.8 },
+    { "party": "Others", "share": 21.7 }
+  ]
+}

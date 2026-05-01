@@ -1,0 +1,26 @@
+name: Refresh Election Data
+
+on:
+  workflow_dispatch: {}
+  schedule:
+    - cron: '0 */1 * * *'
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - run: npm install
+      - run: npm run data:fetch
+        env:
+          ECI_LIVE_API: ${{ secrets.ECI_LIVE_API }}
+      - run: git config user.name 'github-actions[bot]'
+      - run: git config user.email 'github-actions[bot]@users.noreply.github.com'
+      - run: |
+          git add public/data/*.json
+          git commit -m 'Refresh election data' || echo 'No changes to commit'
+          git push

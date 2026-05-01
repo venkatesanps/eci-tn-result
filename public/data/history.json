@@ -1,0 +1,30 @@
+[
+  {
+    "year": "2011",
+    "dmkSeats": 96,
+    "aiadmkSeats": 150,
+    "dmkShare": 39.7,
+    "aiadmkShare": 42.1
+  },
+  {
+    "year": "2016",
+    "dmkSeats": 133,
+    "aiadmkSeats": 98,
+    "dmkShare": 44.0,
+    "aiadmkShare": 39.1
+  },
+  {
+    "year": "2021",
+    "dmkSeats": 159,
+    "aiadmkSeats": 75,
+    "dmkShare": 45.4,
+    "aiadmkShare": 39.6
+  },
+  {
+    "year": "2026",
+    "dmkSeats": 126,
+    "aiadmkSeats": 68,
+    "dmkShare": 42.5,
+    "aiadmkShare": 35.8
+  }
+]
