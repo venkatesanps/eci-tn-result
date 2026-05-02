@@ -14,12 +14,32 @@ import useElectionData from '../hooks/useElectionData';
 import { getPartyData } from '../data/electionData';
 import styles from '../styles/Home.module.css';
 
+type ExpandedSections = {
+  predictions: boolean;
+  analytics: boolean;
+  parties: boolean;
+  constituencies: boolean;
+};
+
 export default function Home() {
   const parties = getPartyData();
   const [selectedYear, setSelectedYear] = useState('2026');
+  const [expandedSections, setExpandedSections] = useState<ExpandedSections>({
+    predictions: true,
+    analytics: false,
+    parties: false,
+    constituencies: false
+  });
   const electionData = useElectionData(selectedYear);
 
   const availableYears = ['2011', '2016', '2021', '2026'];
+
+  const toggleSection = (section: keyof ExpandedSections) => {
+    setExpandedSections(prev => ({
+      ...prev,
+      [section]: !prev[section]
+    }));
+  };
 
   return (
     <div className={styles.page}>
@@ -72,87 +92,134 @@ export default function Home() {
       </header>
 
       <main className={styles.main}>
-        {/* REAL-TIME LEADERBOARD - MAIN FEATURE */}
+        {/* REAL-TIME LEADERBOARD - ALWAYS VISIBLE */}
         <section className={styles.leaderboardSection}>
           <Leaderboard data={electionData.live} />
         </section>
 
-        {/* PREDICTIONS SECTION - Only for current year */}
-        {selectedYear === '2026' && electionData.predictions && (
-          <section className={styles.predictionsSection}>
-            <Predictions data={electionData.live} predictions={electionData.predictions} />
-          </section>
-        )}
-
-        {/* SECONDARY SECTIONS */}
-        <section className={styles.secondarySection}>
-          <div className={styles.secondaryGrid}>
-            {/* LIVE ANALYTICS */}
-            <div className={styles.secondaryCard}>
-              <h3>{selectedYear === '2026' ? 'Live Analytics & Trends' : 'Election Analysis'}</h3>
-              <LiveTrends data={electionData.live} constituencies={electionData.constituencies} />
+        {/* COLLAPSIBLE SECTIONS */}
+        <div className={styles.mobileSections}>
+          {/* PREDICTIONS SECTION - Only for current year */}
+          {selectedYear === '2026' && electionData.predictions && (
+            <div className={styles.collapsibleSection}>
+              <button
+                className={styles.sectionToggle}
+                onClick={() => toggleSection('predictions')}
+                aria-expanded={expandedSections.predictions}
+              >
+                <div className={styles.toggleHeader}>
+                  <div className={styles.toggleIcon}>🔮</div>
+                  <div className={styles.toggleContent}>
+                    <h3>AI Predictions</h3>
+                    <p>Live forecast and analysis</p>
+                  </div>
+                  <div className={`${styles.toggleArrow} ${expandedSections.predictions ? styles.expanded : ''}`}>
+                    ▼
+                  </div>
+                </div>
+              </button>
+              {expandedSections.predictions && (
+                <div className={styles.sectionContent}>
+                  <Predictions data={electionData.live} predictions={electionData.predictions} />
+                </div>
+              )}
             </div>
+          )}
 
-            {/* PREDICTIONS */}
-            <div className={styles.secondaryCard}>
-              <h3>Election Predictions</h3>
-              <PredictionPanel data={electionData.live} />
-            </div>
-          </div>
-        </section>
-
-        {/* PARTY DETAILS */}
-        <section className={styles.partySection}>
-          <div className={styles.sectionHeader}>
-            <h2>Party Performance</h2>
-            <p>Detailed analysis of each major alliance</p>
-          </div>
-          <div className={styles.partyGrid}>
-            {parties.map((party) => (
-              <PartyCard key={party.slug} party={party} />
-            ))}
-          </div>
-        </section>
-
-        {/* CONSTITUENCY RESULTS */}
-        <section className={styles.constituencySection} id="constituency">
-          <div className={styles.sectionHeader}>
-            <h2>Constituency Results</h2>
-            <p>Detailed results from all 234 constituencies</p>
-          </div>
-          <ConstituencyMap constituencies={electionData.constituencies} />
-          <ConstituencyAnalytics constituencies={electionData.constituencies} />
-        </section>
-
-        {/* NAVIGATION */}
-        <section className={styles.navigationSection}>
-          <div className={styles.sectionHeader}>
-            <h2>Explore More</h2>
-            <p>Additional election data and historical comparisons</p>
-          </div>
-          <div className={styles.navGrid}>
-            <Link href="/history" className={styles.navCard}>
-              <div className={styles.navIcon}>📊</div>
-              <div className={styles.navContent}>
-                <h3>Historical Results</h3>
-                <p>Compare with previous elections</p>
+          {/* ANALYTICS SECTION */}
+          <div className={styles.collapsibleSection}>
+            <button
+              className={styles.sectionToggle}
+              onClick={() => toggleSection('analytics')}
+              aria-expanded={expandedSections.analytics}
+            >
+              <div className={styles.toggleHeader}>
+                <div className={styles.toggleIcon}>📊</div>
+                <div className={styles.toggleContent}>
+                  <h3>{selectedYear === '2026' ? 'Live Analytics' : 'Election Analysis'}</h3>
+                  <p>Trends and insights</p>
+                </div>
+                <div className={`${styles.toggleArrow} ${expandedSections.analytics ? styles.expanded : ''}`}>
+                  ▼
+                </div>
               </div>
-            </Link>
-            <a href="#analytics" className={styles.navCard}>
-              <div className={styles.navIcon}>📈</div>
-              <div className={styles.navContent}>
-                <h3>Advanced Analytics</h3>
-                <p>Detailed voting patterns</p>
+            </button>
+            {expandedSections.analytics && (
+              <div className={styles.sectionContent}>
+                <div className={styles.analyticsGrid}>
+                  <LiveTrends data={electionData.live} constituencies={electionData.constituencies} />
+                  <PredictionPanel data={electionData.live} />
+                </div>
               </div>
-            </a>
-            <a href="#predictions" className={styles.navCard}>
-              <div className={styles.navIcon}>🔮</div>
-              <div className={styles.navContent}>
-                <h3>Predictions</h3>
-                <p>AI-powered outcome forecasts</p>
-              </div>
-            </a>
+            )}
           </div>
+
+          {/* PARTY PERFORMANCE */}
+          <div className={styles.collapsibleSection}>
+            <button
+              className={styles.sectionToggle}
+              onClick={() => toggleSection('parties')}
+              aria-expanded={expandedSections.parties}
+            >
+              <div className={styles.toggleHeader}>
+                <div className={styles.toggleIcon}>🏛️</div>
+                <div className={styles.toggleContent}>
+                  <h3>Party Performance</h3>
+                  <p>Alliance breakdown</p>
+                </div>
+                <div className={`${styles.toggleArrow} ${expandedSections.parties ? styles.expanded : ''}`}>
+                  ▼
+                </div>
+              </div>
+            </button>
+            {expandedSections.parties && (
+              <div className={styles.sectionContent}>
+                <div className={styles.partyGrid}>
+                  {parties.map((party) => (
+                    <PartyCard key={party.slug} party={party} />
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* CONSTITUENCY RESULTS */}
+          <div className={styles.collapsibleSection}>
+            <button
+              className={styles.sectionToggle}
+              onClick={() => toggleSection('constituencies')}
+              aria-expanded={expandedSections.constituencies}
+            >
+              <div className={styles.toggleHeader}>
+                <div className={styles.toggleIcon}>🗺️</div>
+                <div className={styles.toggleContent}>
+                  <h3>Constituency Results</h3>
+                  <p>All 234 constituencies</p>
+                </div>
+                <div className={`${styles.toggleArrow} ${expandedSections.constituencies ? styles.expanded : ''}`}>
+                  ▼
+                </div>
+              </div>
+            </button>
+            {expandedSections.constituencies && (
+              <div className={styles.sectionContent}>
+                <ConstituencyMap constituencies={electionData.constituencies} />
+                <ConstituencyAnalytics constituencies={electionData.constituencies} />
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* BOTTOM NAVIGATION */}
+        <section className={styles.bottomNav}>
+          <Link href="/history" className={styles.navLink}>
+            <div className={styles.navIcon}>📚</div>
+            <span>Historical Data</span>
+          </Link>
+          <a href="#top" className={styles.navLink} onClick={(e) => { e.preventDefault(); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>
+            <div className={styles.navIcon}>⬆️</div>
+            <span>Back to Top</span>
+          </a>
         </section>
       </main>
     </div>
