@@ -1,54 +1,70 @@
 import Head from 'next/head';
 import Link from 'next/link';
+import { useState } from 'react';
+import YearSelector from '../components/YearSelector';
 import Leaderboard from '../components/Leaderboard';
 import LiveSummary from '../components/LiveSummary';
 import PredictionPanel from '../components/PredictionPanel';
+import Predictions from '../components/Predictions';
 import PartyCard from '../components/PartyCard';
 import LiveTrends from '../components/LiveTrends';
 import ConstituencyMap from '../components/ConstituencyMap';
 import ConstituencyAnalytics from '../components/ConstituencyAnalytics';
-import useLiveData from '../hooks/useLiveData';
+import useElectionData from '../hooks/useElectionData';
 import { getPartyData } from '../data/electionData';
 import styles from '../styles/Home.module.css';
 
 export default function Home() {
   const parties = getPartyData();
-  const { live, constituencies } = useLiveData();
+  const [selectedYear, setSelectedYear] = useState('2026');
+  const electionData = useElectionData(selectedYear);
+
+  const availableYears = ['2011', '2016', '2021', '2026'];
 
   return (
     <div className={styles.page}>
       <Head>
-        <title>2026 Tamil Nadu Election Results - Live Leaderboard</title>
+        <title>Tamil Nadu Election Results {selectedYear} - Live Dashboard</title>
         <meta
           name="description"
-          content="Live 2026 Tamil Nadu assembly election results. Real-time leaderboard, seat counts, vote share, and constituency-wise data."
+          content={`Tamil Nadu assembly election results for ${selectedYear}. ${selectedYear === '2026' ? 'Live' : 'Historical'} seat counts, vote share, and constituency-wise data.`}
         />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
+
+      {/* YEAR SELECTOR */}
+      <YearSelector
+        selectedYear={selectedYear}
+        onYearChange={setSelectedYear}
+        availableYears={availableYears}
+      />
 
       {/* HERO SECTION WITH LIVE COUNTDOWN */}
       <header className={styles.hero}>
         <div className={styles.heroContent}>
           <div className={styles.liveBadge}>
             <div className={styles.pulseDot}></div>
-            <span>LIVE ELECTION RESULTS</span>
+            <span>{selectedYear === '2026' ? 'LIVE ELECTION RESULTS' : `${selectedYear} RESULTS`}</span>
           </div>
-          <h1>2026 Tamil Nadu Assembly Elections</h1>
+          <h1>{selectedYear} Tamil Nadu Assembly Elections</h1>
           <p className={styles.heroSubtitle}>
-            Real-time leaderboard and comprehensive election analytics
+            {selectedYear === '2026'
+              ? 'Real-time leaderboard and comprehensive election analytics'
+              : 'Historical election results and analysis'
+            }
           </p>
           <div className={styles.heroStats}>
             <div className={styles.statItem}>
-              <span className={styles.statNumber}>{live.reportedSeats}</span>
+              <span className={styles.statNumber}>{electionData.live.reportedSeats}</span>
               <span className={styles.statLabel}>Seats Counted</span>
             </div>
             <div className={styles.statItem}>
-              <span className={styles.statNumber}>{live.totalSeats - live.reportedSeats}</span>
+              <span className={styles.statNumber}>{electionData.live.totalSeats - electionData.live.reportedSeats}</span>
               <span className={styles.statLabel}>Pending</span>
             </div>
             <div className={styles.statItem}>
-              <span className={styles.statNumber}>{live.turnout?.toFixed(1) ?? '—'}%</span>
+              <span className={styles.statNumber}>{electionData.live.turnout?.toFixed(1) ?? '—'}%</span>
               <span className={styles.statLabel}>Turnout</span>
             </div>
           </div>
@@ -58,22 +74,29 @@ export default function Home() {
       <main className={styles.main}>
         {/* REAL-TIME LEADERBOARD - MAIN FEATURE */}
         <section className={styles.leaderboardSection}>
-          <Leaderboard data={live} />
+          <Leaderboard data={electionData.live} />
         </section>
+
+        {/* PREDICTIONS SECTION - Only for current year */}
+        {selectedYear === '2026' && electionData.predictions && (
+          <section className={styles.predictionsSection}>
+            <Predictions data={electionData.live} predictions={electionData.predictions} />
+          </section>
+        )}
 
         {/* SECONDARY SECTIONS */}
         <section className={styles.secondarySection}>
           <div className={styles.secondaryGrid}>
             {/* LIVE ANALYTICS */}
             <div className={styles.secondaryCard}>
-              <h3>Live Analytics & Trends</h3>
-              <LiveTrends data={live} constituencies={constituencies} />
+              <h3>{selectedYear === '2026' ? 'Live Analytics & Trends' : 'Election Analysis'}</h3>
+              <LiveTrends data={electionData.live} constituencies={electionData.constituencies} />
             </div>
 
             {/* PREDICTIONS */}
             <div className={styles.secondaryCard}>
               <h3>Election Predictions</h3>
-              <PredictionPanel data={live} />
+              <PredictionPanel data={electionData.live} />
             </div>
           </div>
         </section>
@@ -97,8 +120,8 @@ export default function Home() {
             <h2>Constituency Results</h2>
             <p>Detailed results from all 234 constituencies</p>
           </div>
-          <ConstituencyMap constituencies={constituencies} />
-          <ConstituencyAnalytics constituencies={constituencies} />
+          <ConstituencyMap constituencies={electionData.constituencies} />
+          <ConstituencyAnalytics constituencies={electionData.constituencies} />
         </section>
 
         {/* NAVIGATION */}

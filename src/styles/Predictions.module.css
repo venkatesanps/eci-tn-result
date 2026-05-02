@@ -1,0 +1,283 @@
+/* PREDICTIONS COMPONENT STYLES */
+.predictions {
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.8) 0%, rgba(15, 23, 42, 0.9) 100%);
+  border-radius: 1.2rem;
+  padding: 2rem;
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(10px);
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.header h3 {
+  color: #f8fafc;
+  font-size: 1.5rem;
+  font-weight: 800;
+  margin: 0 0 0.5rem;
+}
+
+.header p {
+  color: #94a3b8;
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+.predictionGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+}
+
+/* MAIN PREDICTION CARD */
+.mainPrediction {
+  display: flex;
+  justify-content: center;
+}
+
+.winnerCard {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(5, 150, 105, 0.2) 100%);
+  border: 2px solid rgba(16, 185, 129, 0.3);
+  border-radius: 1rem;
+  padding: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  min-width: 300px;
+  box-shadow: 0 4px 20px rgba(16, 185, 129, 0.2);
+}
+
+.trophy {
+  font-size: 3rem;
+  filter: drop-shadow(0 2px 8px rgba(16, 185, 129, 0.5));
+}
+
+.winnerInfo {
+  flex: 1;
+}
+
+.winnerInfo h4 {
+  color: #f8fafc;
+  font-size: 1rem;
+  font-weight: 700;
+  margin: 0 0 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.winnerName {
+  color: #10b981;
+  font-size: 1.8rem;
+  font-weight: 900;
+  margin: 0 0 1rem;
+}
+
+.confidence {
+  position: relative;
+}
+
+.confidenceBar {
+  height: 6px;
+  border-radius: 3px;
+  margin-bottom: 0.5rem;
+  transition: width 1s ease;
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
+}
+
+.confidenceText {
+  color: #cbd5e1;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+/* SEATS PROJECTION */
+.seatsProjection {
+  background: rgba(15, 23, 42, 0.5);
+  border-radius: 1rem;
+  padding: 1.5rem;
+  border: 1px solid rgba(71, 85, 105, 0.3);
+}
+
+.seatsProjection h4 {
+  color: #f8fafc;
+  font-size: 1.2rem;
+  font-weight: 700;
+  margin: 0 0 1rem;
+  text-align: center;
+}
+
+.seatsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 1rem;
+}
+
+.seatProjection {
+  background: rgba(30, 41, 59, 0.5);
+  border-radius: 0.75rem;
+  padding: 1rem;
+  text-align: center;
+  border: 1px solid rgba(71, 85, 105, 0.3);
+  position: relative;
+}
+
+.partyName {
+  color: #cbd5e1;
+  font-size: 0.9rem;
+  font-weight: 600;
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
+.projectedSeats {
+  color: #f8fafc;
+  font-size: 1.5rem;
+  font-weight: 900;
+  display: block;
+}
+
+.majorityBadge {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  font-size: 0.6rem;
+  font-weight: 800;
+  padding: 0.25rem 0.5rem;
+  border-radius: 999px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+}
+
+/* FACTORS */
+.factors {
+  background: rgba(15, 23, 42, 0.5);
+  border-radius: 1rem;
+  padding: 1.5rem;
+  border: 1px solid rgba(71, 85, 105, 0.3);
+}
+
+.factors h4 {
+  color: #f8fafc;
+  font-size: 1.2rem;
+  font-weight: 700;
+  margin: 0 0 1rem;
+  text-align: center;
+}
+
+.factorList {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.75rem;
+}
+
+.factor {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: rgba(30, 41, 59, 0.3);
+  border-radius: 0.5rem;
+  padding: 0.75rem;
+}
+
+.factorIcon {
+  font-size: 1.2rem;
+}
+
+.factorText {
+  color: #cbd5e1;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.factorText strong {
+  color: #f8fafc;
+}
+
+/* DISCLAIMER */
+.disclaimer {
+  background: rgba(245, 158, 11, 0.1);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  border-radius: 0.75rem;
+  padding: 1rem;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.disclaimerIcon {
+  font-size: 1.2rem;
+  flex-shrink: 0;
+}
+
+.disclaimerText {
+  color: #d97706;
+  font-size: 0.85rem;
+  line-height: 1.4;
+  margin: 0;
+}
+
+.disclaimerText strong {
+  color: #f59e0b;
+}
+
+/* RESPONSIVE DESIGN */
+@media (max-width: 768px) {
+  .predictions {
+    padding: 1.5rem;
+  }
+
+  .winnerCard {
+    flex-direction: column;
+    text-align: center;
+    gap: 1rem;
+  }
+
+  .trophy {
+    font-size: 2.5rem;
+  }
+
+  .winnerName {
+    font-size: 1.5rem;
+  }
+
+  .seatsGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .factorList {
+    gap: 0.5rem;
+  }
+
+  .factor {
+    padding: 0.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .predictions {
+    padding: 1rem;
+  }
+
+  .winnerCard {
+    padding: 1rem;
+  }
+
+  .seatsProjection,
+  .factors {
+    padding: 1rem;
+  }
+
+  .disclaimer {
+    padding: 0.75rem;
+  }
+
+  .disclaimerText {
+    font-size: 0.8rem;
+  }
+}
