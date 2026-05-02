@@ -1,30 +1,38 @@
 [
   {
     "year": "2011",
-    "dmkSeats": 96,
-    "aiadmkSeats": 150,
-    "dmkShare": 39.7,
-    "aiadmkShare": 42.1
+    "winner": "AIADMK+",
+    "dmkSeats": 31,
+    "aiadmkSeats": 203,
+    "otherSeats": 0,
+    "dmkShare": 36.7,
+    "aiadmkShare": 48.1,
+    "turnout": 73.1,
+    "date": "13 April 2011",
+    "note": "Source: Election Commission of India. AIADMK+ (NTNF alliance) swept power in a historic landslide. AIADMK alone won 150; DMDK (Vijayakanth) won 29. DMK+ (UPA) won only 31: DMK-23, INC-5, PMK-3."
   },
   {
     "year": "2016",
-    "dmkSeats": 133,
-    "aiadmkSeats": 98,
-    "dmkShare": 44.0,
-    "aiadmkShare": 39.1
+    "winner": "AIADMK",
+    "dmkSeats": 98,
+    "aiadmkSeats": 136,
+    "otherSeats": 0,
+    "dmkShare": 43.5,
+    "aiadmkShare": 40.8,
+    "turnout": 73.5,
+    "date": "16 May 2016",
+    "note": "Source: Election Commission of India. AIADMK (ran alone) won 136 seats. DMK+INC alliance won 98 seats: DMK-89, INC-8, IUML-1. Notable FPTP anomaly: DMK+INC received 43.5% vs AIADMK 40.8%, yet won fewer seats."
   },
   {
     "year": "2021",
+    "winner": "DMK+",
     "dmkSeats": 159,
     "aiadmkSeats": 75,
+    "otherSeats": 0,
     "dmkShare": 45.4,
-    "aiadmkShare": 39.6
-  },
-  {
-    "year": "2026",
-    "dmkSeats": 126,
-    "aiadmkSeats": 68,
-    "dmkShare": 42.5,
-    "aiadmkShare": 35.8
+    "aiadmkShare": 39.6,
+    "turnout": 72.8,
+    "date": "6 April 2021",
+    "note": "Source: Election Commission of India. DMK+ (INDIA alliance) won 159 seats: DMK-133, INC-18, VCK-4, CPI-2, CPM-2. AIADMK+ won 75: AIADMK-66, BJP-4, PMK-5. Election held during COVID-19 pandemic."
   }
 ]
