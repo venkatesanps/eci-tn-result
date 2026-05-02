@@ -1,5 +1,6 @@
 import Head from 'next/head';
 import Link from 'next/link';
+import Leaderboard from '../components/Leaderboard';
 import LiveSummary from '../components/LiveSummary';
 import PredictionPanel from '../components/PredictionPanel';
 import PartyCard from '../components/PartyCard';
@@ -17,37 +18,71 @@ export default function Home() {
   return (
     <div className={styles.page}>
       <Head>
-        <title>Tamil Nadu Election Dashboard</title>
+        <title>2026 Tamil Nadu Election Results - Live Leaderboard</title>
         <meta
           name="description"
-          content="Live Tamil Nadu election results, projections, and analytics."
+          content="Live 2026 Tamil Nadu assembly election results. Real-time leaderboard, seat counts, vote share, and constituency-wise data."
         />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <link rel="icon" href="/favicon.ico" />
       </Head>
 
+      {/* HERO SECTION WITH LIVE COUNTDOWN */}
       <header className={styles.hero}>
-        <div>
-          <p className={styles.badge}>Tamil Nadu Assembly Election</p>
-          <h1>Live results and prediction analytics</h1>
-          <p className={styles.lead}>
-            Real-time seat counts, vote share trends, and constituency-level insights for the latest TN assembly election.
+        <div className={styles.heroContent}>
+          <div className={styles.liveBadge}>
+            <div className={styles.pulseDot}></div>
+            <span>LIVE ELECTION RESULTS</span>
+          </div>
+          <h1>2026 Tamil Nadu Assembly Elections</h1>
+          <p className={styles.heroSubtitle}>
+            Real-time leaderboard and comprehensive election analytics
           </p>
-        </div>
-        <div className={styles.actions}>
-          <Link href="/history" className={styles.button}>Historical analytics</Link>
-          <a href="#predictions" className={styles.buttonSecondary}>Prediction panel</a>
+          <div className={styles.heroStats}>
+            <div className={styles.statItem}>
+              <span className={styles.statNumber}>{live.reportedSeats}</span>
+              <span className={styles.statLabel}>Seats Counted</span>
+            </div>
+            <div className={styles.statItem}>
+              <span className={styles.statNumber}>{live.totalSeats - live.reportedSeats}</span>
+              <span className={styles.statLabel}>Pending</span>
+            </div>
+            <div className={styles.statItem}>
+              <span className={styles.statNumber}>{live.turnout?.toFixed(1) ?? '—'}%</span>
+              <span className={styles.statLabel}>Turnout</span>
+            </div>
+          </div>
         </div>
       </header>
 
       <main className={styles.main}>
-        <section className={styles.topSection}>
-          <LiveSummary data={live} />
-          <PredictionPanel data={live} />
+        {/* REAL-TIME LEADERBOARD - MAIN FEATURE */}
+        <section className={styles.leaderboardSection}>
+          <Leaderboard data={live} />
         </section>
 
+        {/* SECONDARY SECTIONS */}
+        <section className={styles.secondarySection}>
+          <div className={styles.secondaryGrid}>
+            {/* LIVE ANALYTICS */}
+            <div className={styles.secondaryCard}>
+              <h3>Live Analytics & Trends</h3>
+              <LiveTrends data={live} constituencies={constituencies} />
+            </div>
+
+            {/* PREDICTIONS */}
+            <div className={styles.secondaryCard}>
+              <h3>Election Predictions</h3>
+              <PredictionPanel data={live} />
+            </div>
+          </div>
+        </section>
+
+        {/* PARTY DETAILS */}
         <section className={styles.partySection}>
           <div className={styles.sectionHeader}>
-            <h2>Party strength snapshot</h2>
-            <p>Compare leading parties based on seats won, vote share, and momentum.</p>
+            <h2>Party Performance</h2>
+            <p>Detailed analysis of each major alliance</p>
           </div>
           <div className={styles.partyGrid}>
             {parties.map((party) => (
@@ -56,27 +91,43 @@ export default function Home() {
           </div>
         </section>
 
-        <section className={styles.analyticsSection}>
+        {/* CONSTITUENCY RESULTS */}
+        <section className={styles.constituencySection} id="constituency">
           <div className={styles.sectionHeader}>
-            <h2>Live analytics</h2>
-            <p>Instant insights from reported vote share, turnout, and critical battleground seats.</p>
+            <h2>Constituency Results</h2>
+            <p>Detailed results from all 234 constituencies</p>
           </div>
-          <LiveTrends data={live} constituencies={constituencies} />
+          <ConstituencyMap constituencies={constituencies} />
+          <ConstituencyAnalytics constituencies={constituencies} />
         </section>
 
-        <ConstituencyMap constituencies={constituencies} />
-        <ConstituencyAnalytics constituencies={constituencies} />
-
-        <section className={styles.browseSection}>
-          <h2>More analytics</h2>
-          <div className={styles.linksGrid}>
-            <Link href="/history" className={styles.linkCard}>
-              <h3>Historical elections</h3>
-              <p>View prior result cycles, vote swings, and demographic comparisons.</p>
+        {/* NAVIGATION */}
+        <section className={styles.navigationSection}>
+          <div className={styles.sectionHeader}>
+            <h2>Explore More</h2>
+            <p>Additional election data and historical comparisons</p>
+          </div>
+          <div className={styles.navGrid}>
+            <Link href="/history" className={styles.navCard}>
+              <div className={styles.navIcon}>📊</div>
+              <div className={styles.navContent}>
+                <h3>Historical Results</h3>
+                <p>Compare with previous elections</p>
+              </div>
             </Link>
-            <a href="#predictions" className={styles.linkCard}>
-              <h3>Real-time predictions</h3>
-              <p>Live forecast summary based on available seat counts and remaining constituencies.</p>
+            <a href="#analytics" className={styles.navCard}>
+              <div className={styles.navIcon}>📈</div>
+              <div className={styles.navContent}>
+                <h3>Advanced Analytics</h3>
+                <p>Detailed voting patterns</p>
+              </div>
+            </a>
+            <a href="#predictions" className={styles.navCard}>
+              <div className={styles.navIcon}>🔮</div>
+              <div className={styles.navContent}>
+                <h3>Predictions</h3>
+                <p>AI-powered outcome forecasts</p>
+              </div>
             </a>
           </div>
         </section>
