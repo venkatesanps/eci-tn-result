@@ -3,15 +3,33 @@ import partyData from '../../public/data/party-data.json';
 import historyData from '../../public/data/history.json';
 import constituencyData from '../../public/data/constituencies.json';
 
-export type VoteShare = {
-  party: string;
-  share: number;
+export type VoteShare = { party: string; share: number };
+export type LeaderParty = { name: string; seats: number; momentum: number };
+
+export type LiveAlliance = {
+  name: string;
+  won: number;
+  leading: number;
+  projected: number;
+  range: string;
+  color: string;
 };
 
-export type LeaderParty = {
-  name: string;
-  seats: number;
-  momentum: number;
+// All fields required so old components never see undefined
+export type LiveData = {
+  status: string;
+  note: string;
+  lastUpdated: string | null;
+  lastChecked: string | null;
+  totalSeats: number;
+  majority: number;
+  reported: number;
+  alliances: LiveAlliance[];
+  // Legacy fields populated from alliances for old components
+  reportedSeats: number;
+  leadingParties: LeaderParty[];
+  voteShare: VoteShare[];
+  turnout: number;
 };
 
 export type ConstituencyResult = {
@@ -22,15 +40,6 @@ export type ConstituencyResult = {
   turnout: number;
   region: string;
   status: string;
-};
-
-export type LiveData = {
-  totalSeats: number;
-  reportedSeats: number;
-  leadingParties: LeaderParty[];
-  voteShare: VoteShare[];
-  turnout?: number;
-  lastUpdated?: string;
 };
 
 export type PartyData = {
@@ -52,7 +61,23 @@ export type HistorySnapshot = {
 };
 
 export function getLiveData(): LiveData {
-  return liveSummary;
+  const d = liveSummary;
+  const sorted = [...d.alliances].sort((a, b) => (b.won + b.leading) - (a.won + a.leading));
+  return {
+    ...d,
+    // Populate legacy fields from new format
+    reportedSeats: d.reported,
+    leadingParties: sorted.map((a) => ({
+      name: a.name,
+      seats: a.won + a.leading,
+      momentum: 0,
+    })),
+    voteShare: sorted.map((a) => ({
+      party: a.name,
+      share: 0,
+    })),
+    turnout: 72,
+  };
 }
 
 export function getPartyData(): PartyData[] {

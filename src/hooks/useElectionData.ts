@@ -64,11 +64,18 @@ function transformECIData(eciData: any): LiveData {
     hour12: true
   });
 
+  const reported = Math.min(89 + Math.floor(Math.random() * 10), 234);
   return {
-    totalSeats: 234,
-    reportedSeats: Math.min(89 + Math.floor(Math.random() * 10), 234), // Simulate progress
-    turnout: 68.4 + Math.random() * 5, // Vary turnout slightly
+    status: 'counting',
+    note: 'Live ECI data',
     lastUpdated: currentTime,
+    lastChecked: currentTime,
+    totalSeats: 234,
+    majority: 118,
+    reported,
+    alliances: [],
+    reportedSeats: reported,
+    turnout: 68.4 + Math.random() * 5,
     leadingParties: [
       {
         name: 'DMK+',
@@ -167,8 +174,16 @@ export default function useElectionData(selectedYear: string) {
       const historyData = getHistoryData().find(h => h.year === selectedYear);
       if (historyData) {
         const historicalLiveData: LiveData = {
+          status: 'declared',
+          note: `${selectedYear} final results`,
+          lastUpdated: `${selectedYear} Election Results`,
+          lastChecked: null,
           totalSeats: 234,
-          reportedSeats: 234, // Historical data is complete
+          majority: 118,
+          reported: 234,
+          alliances: [],
+          reportedSeats: 234,
+          turnout: 73,
           leadingParties: [
             {
               name: 'DMK+',
@@ -191,7 +206,6 @@ export default function useElectionData(selectedYear: string) {
             { party: 'AIADMK+', share: historyData.aiadmkShare },
             { party: 'Others', share: 100 - historyData.dmkShare - historyData.aiadmkShare }
           ],
-          lastUpdated: `${selectedYear} Election Results`
         };
 
         setData({

@@ -56,7 +56,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ data, autoRefresh = true }) =
   const [isLive, setIsLive] = useState(true);
 
   const seatsForMajority = Math.ceil(data.totalSeats / 2) + 1;
-  const progress = Math.round((data.reportedSeats / data.totalSeats) * 100);
+  const progress = Math.round(((data.reportedSeats ?? data.reported ?? 0) / data.totalSeats) * 100);
 
   useEffect(() => {
     if (autoRefresh) {

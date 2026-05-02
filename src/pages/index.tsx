@@ -1,10 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Head from 'next/head';
 import {
   BarChart, Bar, LineChart, Line, XAxis, YAxis,
   CartesianGrid, Tooltip, Legend, ResponsiveContainer,
 } from 'recharts';
 import styles from '../styles/Home.module.css';
+
+// ── Types ──────────────────────────────────────────────────────────────────
 
 interface Alliance {
   name: string;
@@ -30,7 +32,28 @@ interface Election {
   projectedNote?: string;
 }
 
-// Verified historical results — Source: Election Commission of India (eci.gov.in)
+interface LiveAlliance {
+  name: string;
+  won: number;
+  leading: number;
+  projected: number;
+  range: string;
+  color: string;
+}
+
+interface LiveSummary {
+  status: 'projected' | 'counting' | 'declared';
+  note: string;
+  lastUpdated: string | null;
+  lastChecked: string | null;
+  totalSeats: number;
+  majority: number;
+  reported: number;
+  alliances: LiveAlliance[];
+}
+
+// ── Static verified data (ECI) ─────────────────────────────────────────────
+
 const ELECTIONS: Record<string, Election> = {
   '2021': {
     year: '2021',
@@ -167,7 +190,6 @@ const ELECTIONS: Record<string, Election> = {
   },
 };
 
-// Chart data — verified historical results only (2026 excluded)
 const SEAT_HISTORY = [
   { year: '2011', 'DMK+': 31, 'AIADMK+': 203 },
   { year: '2016', 'DMK+': 98, 'AIADMK+': 136 },
@@ -183,35 +205,75 @@ const SHARE_HISTORY = [
 const YEARS = ['2011', '2016', '2021', '2026'];
 
 const TOOLTIP_STYLE = {
-  contentStyle: {
-    background: '#1e293b',
-    border: '1px solid #334155',
-    borderRadius: 8,
-    fontSize: 13,
-  },
+  contentStyle: { background: '#1e293b', border: '1px solid #334155', borderRadius: 8, fontSize: 13 },
   labelStyle: { color: '#e2e8f0' },
   itemStyle: { color: '#94a3b8' },
 };
+
+// ── Component ──────────────────────────────────────────────────────────────
 
 export default function Home() {
   const [selectedYear, setSelectedYear] = useState('2021');
   const [expandedAlliance, setExpandedAlliance] = useState<string | null>(null);
   const [showHistory, setShowHistory] = useState(false);
+  const [live, setLive] = useState<LiveSummary | null>(null);
+  const [lastPolled, setLastPolled] = useState<string | null>(null);
+
+  // ── Live data polling (30s) — only when 2026 tab is active ────────────────
+  useEffect(() => {
+    if (selectedYear !== '2026') return;
+    const BASE = process.env.NEXT_PUBLIC_BASE_PATH ?? '';
+
+    const fetchLive = async () => {
+      try {
+        const res = await fetch(`${BASE}/data/live-summary.json?t=${Date.now()}`);
+        if (!res.ok) return;
+        const data: LiveSummary = await res.json();
+        setLive(data);
+        setLastPolled(
+          new Date().toLocaleTimeString('en-IN', {
+            timeZone: 'Asia/Kolkata',
+            hour: '2-digit',
+            minute: '2-digit',
+          })
+        );
+      } catch {
+        // keep existing data on network error
+      }
+    };
+
+    fetchLive();
+    const id = setInterval(fetchLive, 30_000);
+    return () => clearInterval(id);
+  }, [selectedYear]);
 
   const election = ELECTIONS[selectedYear];
+  const isCounting = selectedYear === '2026' && live && live.status === 'counting';
+  const isDeclared = selectedYear === '2026' && live && live.status === 'declared';
+  const isLive     = isCounting || isDeclared;
 
   function handleYearChange(year: string) {
     setSelectedYear(year);
     setExpandedAlliance(null);
   }
 
+  // ── 2026 live leader (won + leading) ──────────────────────────────────────
+  function liveLeader(): LiveAlliance | null {
+    if (!live || !isLive) return null;
+    return [...live.alliances].sort((a, b) => (b.won + b.leading) - (a.won + a.leading))[0] ?? null;
+  }
+
   return (
     <>
       <Head>
-        <title>Tamil Nadu Elections — Results & Analysis</title>
+        <title>
+          {isLive
+            ? `TN Elections 2026 — LIVE Results`
+            : 'Tamil Nadu Elections — Results & Analysis'}
+        </title>
         <meta
           name="description"
-          content="Tamil Nadu assembly election results (2011, 2016, 2021) and 2026 projections. Verified data from the Election Commission of India."
+          content="Tamil Nadu assembly election results (2011, 2016, 2021) and 2026 live results. Data from the Election Commission of India."
         />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
@@ -231,10 +293,23 @@ export default function Home() {
         {/* ── HERO ── */}
         <header className={styles.hero} id="top">
           <p className={styles.heroLabel}>234 constituencies · Tamil Nadu Assembly</p>
-          <h1 className={styles.heroTitle}>Tamil Nadu Election Results</h1>
+          <h1 className={styles.heroTitle}>
+            {isLive ? 'Tamil Nadu 2026 — Live Results' : 'Tamil Nadu Election Results'}
+          </h1>
           <p className={styles.heroSubtitle}>
-            Verified historical data from the Election Commission of India
+            {isLive
+              ? `Counting in progress · Updates every ~5 min from ECI · Page refreshes every 30s`
+              : 'Verified historical data from the Election Commission of India'}
           </p>
+          {isLive && live && (
+            <div className={styles.liveBar}>
+              <span className={styles.liveDot} />
+              <span className={styles.liveText}>
+                {live.reported} / {live.totalSeats} seats reported
+                {lastPolled && ` · Checked ${lastPolled} IST`}
+              </span>
+            </div>
+          )}
         </header>
 
         {/* ── YEAR TABS ── */}
@@ -249,7 +324,12 @@ export default function Home() {
                 onClick={() => handleYearChange(y)}
               >
                 {y}
-                {y === '2026' && <span className={styles.projBadge}>Projected</span>}
+                {y === '2026' && isLive && (
+                  <span className={styles.liveBadge}>LIVE</span>
+                )}
+                {y === '2026' && !isLive && (
+                  <span className={styles.projBadge}>Projected</span>
+                )}
               </button>
             ))}
           </div>
@@ -259,136 +339,249 @@ export default function Home() {
         <section id="results" className={styles.section}>
           <div className={styles.container}>
 
-            {/* Header row */}
-            <div className={styles.resultHeader}>
-              <div>
-                <div className={styles.metaRow}>
-                  <span
-                    className={`${styles.statusPill} ${
-                      election.isProjected ? styles.pillAmber : styles.pillGreen
-                    }`}
-                  >
-                    {election.status}
-                  </span>
-                  <span className={styles.metaText}>{election.date}</span>
-                  <span className={styles.metaText}>Turnout: {election.turnout}</span>
-                  <span className={styles.metaText}>Majority: {election.majority} seats</span>
-                </div>
-              </div>
-              {!election.isProjected && (
-                <div className={styles.winnerChip}>
-                  <span className={styles.winnerChipLabel}>Winner</span>
-                  <span className={styles.winnerChipValue}>{election.winner}</span>
-                </div>
-              )}
-            </div>
-
-            {/* Projection warning */}
-            {election.isProjected && (
-              <div className={styles.projWarning}>
-                <span className={styles.projIcon}>⚠</span>
-                <p>
-                  <strong>Projected data only.</strong> {election.projectedNote}
-                </p>
-              </div>
-            )}
-
-            {/* Alliance cards */}
-            <div className={styles.allianceGrid}>
-              {election.alliances.map((a) => {
-                const pct = Math.round((a.seats / election.totalSeats) * 100);
-                const isOpen = expandedAlliance === a.name;
-                return (
-                  <div
-                    key={a.name}
-                    className={`${styles.allianceCard} ${a.isWinner ? styles.cardWinner : ''}`}
-                    style={{ '--party-color': a.color } as React.CSSProperties}
-                  >
-                    <div className={styles.cardTop}>
-                      <div className={styles.cardLeft}>
-                        <h3 className={styles.allianceName}>{a.name}</h3>
-                        {a.isWinner && <span className={styles.wonTag}>Won</span>}
-                      </div>
-                      <div className={styles.cardStats}>
-                        <div className={styles.stat}>
-                          <span className={styles.statNum} style={{ color: a.color }}>
-                            {election.isProjected && a.range ? `~${a.seats}` : a.seats}
-                          </span>
-                          <span className={styles.statLbl}>
-                            {election.isProjected ? 'proj. seats' : 'seats won'}
-                          </span>
-                        </div>
-                        <div className={styles.stat}>
-                          <span className={styles.statNum}>{a.share}%</span>
-                          <span className={styles.statLbl}>vote share</span>
-                        </div>
-                      </div>
+            {/* ── 2026 LIVE COUNTING VIEW ── */}
+            {selectedYear === '2026' && isLive && live ? (
+              <>
+                {/* Status header */}
+                <div className={styles.resultHeader}>
+                  <div>
+                    <div className={styles.metaRow}>
+                      <span className={`${styles.statusPill} ${isDeclared ? styles.pillGreen : styles.pillLive}`}>
+                        {isDeclared ? 'Results Declared' : 'Counting in Progress'}
+                      </span>
+                      <span className={styles.metaText}>
+                        {live.reported} of {live.totalSeats} seats reported
+                        ({Math.round((live.reported / live.totalSeats) * 100)}%)
+                      </span>
+                      <span className={styles.metaText}>Majority: {live.majority}</span>
                     </div>
-
-                    {/* Progress bar */}
-                    <div className={styles.barTrack}>
-                      <div
-                        className={styles.barFill}
-                        style={{ width: `${pct}%`, background: a.color }}
-                        title={`${pct}% of total seats`}
-                      />
-                    </div>
-                    {election.isProjected && a.range && (
-                      <p className={styles.rangeNote}>Projected range: {a.range} seats</p>
-                    )}
-
-                    {/* Drill-down toggle */}
-                    <button
-                      className={styles.drillBtn}
-                      onClick={() => setExpandedAlliance(isOpen ? null : a.name)}
-                      aria-expanded={isOpen}
-                    >
-                      {isOpen ? '▲ Hide breakdown' : '▼ Party breakdown'}
-                    </button>
-
-                    {isOpen && (
-                      <ul className={styles.partyList}>
-                        {a.parties.map((p) => (
-                          <li key={p} className={styles.partyItem}>{p}</li>
-                        ))}
-                      </ul>
+                    {live.lastUpdated && (
+                      <p className={styles.eciUpdated}>
+                        ECI data as of {live.lastUpdated}
+                        {lastPolled && ` · Page checked {lastPolled} IST`}
+                      </p>
                     )}
                   </div>
-                );
-              })}
-            </div>
+                  {(() => {
+                    const leader = liveLeader();
+                    if (!leader) return null;
+                    const total = leader.won + leader.leading;
+                    const hasMajority = leader.won >= live.majority;
+                    return (
+                      <div className={`${styles.winnerChip} ${hasMajority ? styles.winnerChipMajority : ''}`}>
+                        <span className={styles.winnerChipLabel}>
+                          {hasMajority ? 'Majority Won' : 'Leading'}
+                        </span>
+                        <span className={styles.winnerChipValue} style={{ color: leader.color }}>
+                          {leader.name}
+                        </span>
+                        <span className={styles.winnerChipSub}>{total} seats</span>
+                      </div>
+                    );
+                  })()}
+                </div>
 
-            {/* Majority reference */}
-            <div className={styles.majorityBar}>
-              <div className={styles.majorityLine} style={{ left: `${(election.majority / election.totalSeats) * 100}%` }} />
-              <div className={styles.majoritySegs}>
-                {election.alliances.map((a) => (
+                {/* Reported progress bar */}
+                <div className={styles.reportedBar}>
                   <div
-                    key={a.name}
-                    style={{
-                      width: `${(a.seats / election.totalSeats) * 100}%`,
-                      background: a.color,
-                      height: '100%',
-                      opacity: 0.85,
-                    }}
-                    title={`${a.name}: ${a.seats} seats`}
+                    className={styles.reportedFill}
+                    style={{ width: `${(live.reported / live.totalSeats) * 100}%` }}
                   />
-                ))}
-              </div>
-              <p className={styles.majorityCaption}>
-                ← Majority mark at {election.majority} seats ({Math.round((election.majority / election.totalSeats) * 100)}%) →
-              </p>
-            </div>
+                </div>
 
-            {/* Context */}
-            <div className={styles.contextCard}>
-              <p className={styles.contextText}>{election.context}</p>
-              {!election.isProjected && (
-                <p className={styles.sourceNote}>
-                  Data source: Election Commission of India — eci.gov.in
-                </p>
-              )}
-            </div>
+                {/* Live alliance cards */}
+                <div className={styles.allianceGrid}>
+                  {live.alliances.map((a) => {
+                    const total   = a.won + a.leading;
+                    const wonPct  = Math.round((a.won  / live.totalSeats) * 100);
+                    const leadPct = Math.round((total  / live.totalSeats) * 100);
+                    const hasMaj  = a.won >= live.majority;
+                    return (
+                      <div
+                        key={a.name}
+                        className={`${styles.allianceCard} ${hasMaj ? styles.cardWinner : ''}`}
+                        style={{ '--party-color': a.color } as React.CSSProperties}
+                      >
+                        <div className={styles.cardTop}>
+                          <div className={styles.cardLeft}>
+                            <h3 className={styles.allianceName}>{a.name}</h3>
+                            {hasMaj && <span className={styles.wonTag}>Majority</span>}
+                          </div>
+                          <div className={styles.cardStats}>
+                            <div className={styles.stat}>
+                              <span className={styles.statNum} style={{ color: a.color }}>{a.won}</span>
+                              <span className={styles.statLbl}>won</span>
+                            </div>
+                            <div className={styles.stat}>
+                              <span className={styles.statNum} style={{ color: '#94a3b8' }}>+{a.leading}</span>
+                              <span className={styles.statLbl}>leading</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Won bar */}
+                        <div className={styles.barTrack}>
+                          <div
+                            className={styles.barFill}
+                            style={{ width: `${leadPct}%`, background: a.color, opacity: 0.35 }}
+                          />
+                          <div
+                            className={`${styles.barFill} ${styles.barFillAbsolute}`}
+                            style={{ width: `${wonPct}%`, background: a.color }}
+                          />
+                        </div>
+                        <p className={styles.rangeNote}>
+                          {total} total ({a.won} won · {a.leading} leading) · Majority: {live.majority}
+                        </p>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Majority reference bar */}
+                <div className={styles.majorityBar}>
+                  <div className={styles.majorityLine} style={{ left: `${(live.majority / live.totalSeats) * 100}%` }} />
+                  <div className={styles.majoritySegs}>
+                    {live.alliances.map((a) => (
+                      <div
+                        key={a.name}
+                        style={{ width: `${((a.won + a.leading) / live.totalSeats) * 100}%`, background: a.color, height: '100%', opacity: 0.85 }}
+                        title={`${a.name}: ${a.won + a.leading} seats`}
+                      />
+                    ))}
+                  </div>
+                  <p className={styles.majorityCaption}>← Majority at {live.majority} seats →</p>
+                </div>
+
+                <div className={styles.contextCard}>
+                  <p className={styles.contextText}>
+                    Live counting data sourced from the Election Commission of India. Won = result declared.
+                    Leading = candidate ahead but not yet declared. Updated every ~5 minutes.
+                  </p>
+                  <p className={styles.sourceNote}>Source: results.eci.gov.in</p>
+                </div>
+              </>
+            ) : (
+              <>
+                {/* ── STATIC / PROJECTED VIEW (all years except 2026 live) ── */}
+
+                <div className={styles.resultHeader}>
+                  <div>
+                    <div className={styles.metaRow}>
+                      <span
+                        className={`${styles.statusPill} ${
+                          election.isProjected ? styles.pillAmber : styles.pillGreen
+                        }`}
+                      >
+                        {election.status}
+                      </span>
+                      <span className={styles.metaText}>{election.date}</span>
+                      <span className={styles.metaText}>Turnout: {election.turnout}</span>
+                      <span className={styles.metaText}>Majority: {election.majority} seats</span>
+                    </div>
+                  </div>
+                  {!election.isProjected && (
+                    <div className={styles.winnerChip}>
+                      <span className={styles.winnerChipLabel}>Winner</span>
+                      <span className={styles.winnerChipValue}>{election.winner}</span>
+                    </div>
+                  )}
+                </div>
+
+                {election.isProjected && (
+                  <div className={styles.projWarning}>
+                    <span className={styles.projIcon}>⚠</span>
+                    <p>
+                      <strong>Projected data only.</strong> {election.projectedNote}
+                      {selectedYear === '2026' && lastPolled && (
+                        <> Page checked ECI at {lastPolled} IST — no live results yet.</>
+                      )}
+                    </p>
+                  </div>
+                )}
+
+                <div className={styles.allianceGrid}>
+                  {election.alliances.map((a) => {
+                    const pct  = Math.round((a.seats / election.totalSeats) * 100);
+                    const isOpen = expandedAlliance === a.name;
+                    return (
+                      <div
+                        key={a.name}
+                        className={`${styles.allianceCard} ${a.isWinner ? styles.cardWinner : ''}`}
+                        style={{ '--party-color': a.color } as React.CSSProperties}
+                      >
+                        <div className={styles.cardTop}>
+                          <div className={styles.cardLeft}>
+                            <h3 className={styles.allianceName}>{a.name}</h3>
+                            {a.isWinner && <span className={styles.wonTag}>Won</span>}
+                          </div>
+                          <div className={styles.cardStats}>
+                            <div className={styles.stat}>
+                              <span className={styles.statNum} style={{ color: a.color }}>
+                                {election.isProjected && a.range ? `~${a.seats}` : a.seats}
+                              </span>
+                              <span className={styles.statLbl}>
+                                {election.isProjected ? 'proj. seats' : 'seats won'}
+                              </span>
+                            </div>
+                            <div className={styles.stat}>
+                              <span className={styles.statNum}>{a.share}%</span>
+                              <span className={styles.statLbl}>vote share</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className={styles.barTrack}>
+                          <div className={styles.barFill} style={{ width: `${pct}%`, background: a.color }} />
+                        </div>
+                        {election.isProjected && a.range && (
+                          <p className={styles.rangeNote}>Projected range: {a.range} seats</p>
+                        )}
+
+                        <button
+                          className={styles.drillBtn}
+                          onClick={() => setExpandedAlliance(isOpen ? null : a.name)}
+                          aria-expanded={isOpen}
+                        >
+                          {isOpen ? '▲ Hide breakdown' : '▼ Party breakdown'}
+                        </button>
+
+                        {isOpen && (
+                          <ul className={styles.partyList}>
+                            {a.parties.map((p) => (
+                              <li key={p} className={styles.partyItem}>{p}</li>
+                            ))}
+                          </ul>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <div className={styles.majorityBar}>
+                  <div className={styles.majorityLine} style={{ left: `${(election.majority / election.totalSeats) * 100}%` }} />
+                  <div className={styles.majoritySegs}>
+                    {election.alliances.map((a) => (
+                      <div
+                        key={a.name}
+                        style={{ width: `${(a.seats / election.totalSeats) * 100}%`, background: a.color, height: '100%', opacity: 0.85 }}
+                        title={`${a.name}: ${a.seats} seats`}
+                      />
+                    ))}
+                  </div>
+                  <p className={styles.majorityCaption}>
+                    ← Majority mark at {election.majority} seats ({Math.round((election.majority / election.totalSeats) * 100)}%) →
+                  </p>
+                </div>
+
+                <div className={styles.contextCard}>
+                  <p className={styles.contextText}>{election.context}</p>
+                  {!election.isProjected && (
+                    <p className={styles.sourceNote}>Data source: Election Commission of India — eci.gov.in</p>
+                  )}
+                </div>
+              </>
+            )}
           </div>
         </section>
 
@@ -409,7 +602,6 @@ export default function Home() {
               </button>
             </div>
 
-            {/* Always-visible summary table */}
             <div className={styles.summaryTable}>
               <div className={styles.tableHead}>
                 <span>Year</span>
@@ -419,9 +611,9 @@ export default function Home() {
                 <span>Turnout</span>
               </div>
               {[
-                { year: '2011', winner: 'AIADMK+', dmk: 31, aiadmk: 203, turnout: '73.1%' },
-                { year: '2016', winner: 'AIADMK', dmk: 98, aiadmk: 136, turnout: '73.5%' },
-                { year: '2021', winner: 'DMK+', dmk: 159, aiadmk: 75, turnout: '72.8%' },
+                { year: '2011', winner: 'AIADMK+', dmk: 31,  aiadmk: 203, turnout: '73.1%' },
+                { year: '2016', winner: 'AIADMK',  dmk: 98,  aiadmk: 136, turnout: '73.5%' },
+                { year: '2021', winner: 'DMK+',    dmk: 159, aiadmk: 75,  turnout: '72.8%' },
               ].map((row) => (
                 <div
                   key={row.year}
@@ -432,10 +624,7 @@ export default function Home() {
                   onKeyDown={(e) => e.key === 'Enter' && handleYearChange(row.year)}
                 >
                   <span className={styles.tableYear}>{row.year}</span>
-                  <span
-                    className={styles.tableWinner}
-                    style={{ color: row.winner.startsWith('DMK') ? '#3b82f6' : '#ef4444' }}
-                  >
+                  <span className={styles.tableWinner} style={{ color: row.winner.startsWith('DMK') ? '#3b82f6' : '#ef4444' }}>
                     {row.winner}
                   </span>
                   <span style={{ color: '#3b82f6' }}>{row.dmk}</span>
@@ -445,7 +634,6 @@ export default function Home() {
               ))}
             </div>
 
-            {/* Expandable charts */}
             {showHistory && (
               <div className={styles.chartsWrap}>
                 <div className={styles.chartCard}>
@@ -482,31 +670,21 @@ export default function Home() {
               </div>
             )}
 
-            {/* Key patterns */}
             <div className={styles.patternsGrid}>
               <div className={styles.patternCard}>
                 <div className={styles.patternIcon}>↩</div>
                 <h4>Power Alternation</h4>
-                <p>
-                  Tamil Nadu has alternated between DMK and AIADMK every 1–2 terms since 1977.
-                  No party has won three consecutive terms.
-                </p>
+                <p>Tamil Nadu has alternated between DMK and AIADMK every 1–2 terms since 1977. No party has won three consecutive terms.</p>
               </div>
               <div className={styles.patternCard}>
                 <div className={styles.patternIcon}>⊘</div>
                 <h4>FPTP Seat-Vote Disconnect</h4>
-                <p>
-                  In 2016, DMK+INC won more votes (43.5%) than AIADMK (40.8%) yet won 38 fewer
-                  seats — a stark illustration of first-past-the-post effects.
-                </p>
+                <p>In 2016, DMK+INC won more votes (43.5%) than AIADMK (40.8%) yet won 38 fewer seats — a stark illustration of first-past-the-post effects.</p>
               </div>
               <div className={styles.patternCard}>
                 <div className={styles.patternIcon}>↑</div>
                 <h4>DMK Vote Share Growth</h4>
-                <p>
-                  DMK+ alliance vote share has risen from 36.7% (2011) to 45.4% (2021),
-                  a gain of 8.7 percentage points over three cycles.
-                </p>
+                <p>DMK+ alliance vote share has risen from 36.7% (2011) to 45.4% (2021), a gain of 8.7 percentage points over three cycles.</p>
               </div>
             </div>
           </div>
@@ -517,66 +695,57 @@ export default function Home() {
           <div className={styles.container}>
             <h2 className={styles.sectionTitle}>2026 Outlook</h2>
             <p className={styles.sectionSub}>
-              Pre-election analysis · Projections only · Not official results
+              {isLive ? 'Live counting underway — see Results tab above for latest' : 'Pre-election analysis · Projections only · Not official results'}
             </p>
 
             <div className={styles.outlookGrid}>
               <div className={styles.outlookCard}>
                 <h3>Key Factors</h3>
                 <ul className={styles.factorList}>
-                  <li>
-                    <strong>DMK incumbency:</strong> CM M.K. Stalin seeks re-election on development
-                    credentials (industrial investments, welfare schemes, infrastructure).
-                  </li>
-                  <li>
-                    <strong>AIADMK fragmentation:</strong> Ongoing split between Edappadi K.
-                    Palaniswami and O. Panneerselvam factions continues to weaken the main
-                    opposition.
-                  </li>
-                  <li>
-                    <strong>BJP/NDA factor:</strong> BJP-led NDA aims to make inroads into
-                    Dravidian politics. Won only 4 seats (with AIADMK) in 2021.
-                  </li>
-                  <li>
-                    <strong>Anti-incumbency risk:</strong> Dravidian pattern favours rotation.
-                    Any governance fatigue or local issues could swing seats.
-                  </li>
-                  <li>
-                    <strong>50-year Dravidian milestone:</strong> 2026 marks 50 years since DMK and
-                    AIADMK took full control of TN politics, defining its political identity.
-                  </li>
+                  <li><strong>DMK incumbency:</strong> CM M.K. Stalin seeks re-election on development credentials (industrial investments, welfare schemes, infrastructure).</li>
+                  <li><strong>AIADMK fragmentation:</strong> Ongoing split between Edappadi K. Palaniswami and O. Panneerselvam factions continues to weaken the main opposition.</li>
+                  <li><strong>BJP/NDA factor:</strong> BJP-led NDA aims to make inroads into Dravidian politics. Won only 4 seats (with AIADMK) in 2021.</li>
+                  <li><strong>Anti-incumbency risk:</strong> Dravidian pattern favours rotation. Any governance fatigue or local issues could swing seats.</li>
+                  <li><strong>50-year Dravidian milestone:</strong> 2026 marks 50 years since DMK and AIADMK took full control of TN politics.</li>
                 </ul>
               </div>
 
               <div className={styles.outlookCard}>
-                <h3>Survey Projections</h3>
-                <p className={styles.outlookNote}>Pre-election survey ranges — not official results</p>
-                {ELECTIONS['2026'].alliances.map((a) => (
-                  <div key={a.name} className={styles.projRow}>
-                    <span className={styles.projName} style={{ color: a.color }}>
-                      {a.name}
-                    </span>
-                    <div className={styles.projTrack}>
-                      <div
-                        className={styles.projFill}
-                        style={{
-                          width: `${(a.seats / 234) * 100}%`,
-                          background: a.color,
-                        }}
-                      />
+                <h3>{isLive ? 'Live Tally' : 'Survey Projections'}</h3>
+                <p className={styles.outlookNote}>
+                  {isLive ? 'Real-time won + leading counts' : 'Pre-election survey ranges — not official results'}
+                </p>
+                {(isLive && live ? live.alliances : ELECTIONS['2026'].alliances).map((a) => {
+                  const isLiveAlliance = isLive && live;
+                  const liveA = a as LiveAlliance;
+                  const staticA = a as Alliance;
+                  const displayVal = isLiveAlliance
+                    ? `${liveA.won + liveA.leading} seats`
+                    : (staticA.range ?? `~${staticA.seats}`);
+                  const barWidth = isLiveAlliance
+                    ? ((liveA.won + liveA.leading) / 234) * 100
+                    : (staticA.seats / 234) * 100;
+                  return (
+                    <div key={a.name} className={styles.projRow}>
+                      <span className={styles.projName} style={{ color: a.color }}>{a.name}</span>
+                      <div className={styles.projTrack}>
+                        <div className={styles.projFill} style={{ width: `${barWidth}%`, background: a.color }} />
+                      </div>
+                      <span className={styles.projRange}>{displayVal}</span>
                     </div>
-                    <span className={styles.projRange}>{a.range ?? `~${a.seats}`}</span>
-                  </div>
-                ))}
+                  );
+                })}
                 <p className={styles.majorityRef}>Majority required: 118 of 234 seats</p>
               </div>
             </div>
 
             <div className={styles.disclaimerBox}>
               <strong>Data transparency note:</strong> Historical results for 2011, 2016, and 2021
-              are verified from official Election Commission of India records (eci.gov.in). The 2026
-              figures are pre-election survey projections and <strong>not official results</strong>.
-              Projected seat ranges are independent estimates and do not sum to exactly 234.
+              are verified from official ECI records (eci.gov.in). The 2026 figures are pre-election
+              survey projections until official results are declared.{' '}
+              {isLive
+                ? 'Live counts above are sourced from ECI and updated every ~5 minutes.'
+                : 'Projected seat ranges do not sum to exactly 234.'}
             </div>
           </div>
         </section>
@@ -585,12 +754,14 @@ export default function Home() {
         <footer className={styles.footer}>
           <p>
             Data sourced from the{' '}
-            <a href="https://eci.gov.in" target="_blank" rel="noopener noreferrer">
-              Election Commission of India
-            </a>{' '}
-            · Historical results 2011–2021 verified
+            <a href="https://eci.gov.in" target="_blank" rel="noopener noreferrer">Election Commission of India</a>
+            {' '}· Historical results 2011–2021 verified
           </p>
-          <p>2026 projections are unofficial pre-election survey estimates</p>
+          <p>
+            {isLive
+              ? `2026 live results from results.eci.gov.in · refreshed every ~5 min`
+              : '2026 projections are unofficial pre-election survey estimates'}
+          </p>
           <p className={styles.footerSmall}>Tamil Nadu Assembly · 234 constituencies · Majority: 118 seats</p>
         </footer>
 

@@ -1,0 +1,213 @@
+name: Counting Day — Live ECI Data
+
+# Runs every 5 minutes on May 4 2026 (UTC 01:00–19:00 = IST 06:30–00:30)
+# Also triggered manually for testing at any time.
+on:
+  schedule:
+    - cron: '*/5 1-19 4 5 *'
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout gh-pages
+        uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Fetch ECI data and update live-summary.json
+        run: |
+          python3 << 'PYEOF'
+          import urllib.request
+          import urllib.error
+          import json
+          import re
+          import sys
+          from datetime import datetime, timezone, timedelta
+
+          IST = timezone(timedelta(hours=5, minutes=30))
+          now_ist = datetime.now(IST)
+          now_str = now_ist.strftime("%Y-%m-%dT%H:%M:%S+05:30")
+
+          # ── Candidate ECI result endpoints (Tamil Nadu state code S26) ──────────
+          ECI_URLS = [
+              "https://results.eci.gov.in/Result2026/StatewiseS26.json",
+              "https://results.eci.gov.in/Result2026/StatewiseS26.htm",
+              "https://results.eci.gov.in/Result2026/StatewiseU05.htm",
+              "https://results.eci.gov.in/Result2026/partywiseresult-S26.htm",
+          ]
+
+          # Alliance membership mapping
+          DMK_PLUS = {
+              "Dravida Munnetra Kazhagam", "DMK",
+              "Indian National Congress", "INC",
+              "Viduthalai Chiruthaigal Katchi", "VCK",
+              "Communist Party of India", "CPI",
+              "Communist Party of India  (Marxist)", "CPM",
+              "Communist Party of India (Marxist)", "CPM",
+          }
+          AIADMK_PLUS = {
+              "All India Anna Dravida Munnetra Kazhagam", "AIADMK",
+          }
+          NDA = {
+              "Bharatiya Janata Party", "BJP",
+              "Pattali Makkal Katchi", "PMK",
+          }
+
+          def alliance_of(party_name: str) -> str:
+              n = party_name.strip()
+              if n in DMK_PLUS or any(k in n for k in ["Dravida Munnetra", "Indian National Congress", "Viduthalai"]):
+                  return "DMK+"
+              if n in AIADMK_PLUS or "Anna Dravida" in n:
+                  return "AIADMK+"
+              if n in NDA or "Bharatiya Janata" in n or "Pattali Makkal" in n:
+                  return "NDA"
+              return "Others"
+
+          def try_fetch(url: str) -> str | None:
+              try:
+                  req = urllib.request.Request(
+                      url,
+                      headers={"User-Agent": "Mozilla/5.0", "Accept": "*/*"}
+                  )
+                  with urllib.request.urlopen(req, timeout=12) as r:
+                      content = r.read().decode("utf-8", errors="ignore")
+                      if len(content) > 200:
+                          return content
+              except Exception as e:
+                  print(f"  {url}: {e}", file=sys.stderr)
+              return None
+
+          def parse_json(text: str) -> dict | None:
+              try:
+                  data = json.loads(text)
+                  # Look for common ECI JSON structures
+                  parties = None
+                  for key in ["partywise", "parties", "results", "data"]:
+                      if key in data and isinstance(data[key], list):
+                          parties = data[key]
+                          break
+                  if parties is None and isinstance(data, list):
+                      parties = data
+                  if parties is None:
+                      return None
+
+                  totals = {"DMK+": [0,0], "AIADMK+": [0,0], "NDA": [0,0], "Others": [0,0]}
+                  reported = 0
+                  for p in parties:
+                      name = p.get("party_name") or p.get("name") or p.get("Party") or ""
+                      won  = int(p.get("won",  p.get("Won",  p.get("W",  0))) or 0)
+                      lead = int(p.get("leading", p.get("Leading", p.get("L", 0))) or 0)
+                      al = alliance_of(name)
+                      totals[al][0] += won
+                      totals[al][1] += lead
+                      reported += won
+
+                  return {"totals": totals, "reported": reported}
+              except Exception:
+                  return None
+
+          def parse_html(html: str) -> dict | None:
+              # Look for number patterns near party names in ECI HTML tables
+              totals = {"DMK+": [0,0], "AIADMK+": [0,0], "NDA": [0,0], "Others": [0,0]}
+
+              # Try to find table rows with pattern: party name | won | leading
+              # ECI uses various HTML structures; try a flexible regex
+              rows = re.findall(
+                  r'<tr[^>]*>(.*?)</tr>',
+                  html, re.DOTALL | re.IGNORECASE
+              )
+              total_won = 0
+              matched_any = False
+              for row in rows:
+                  cells = re.findall(r'<t[dh][^>]*>(.*?)</t[dh]>', row, re.DOTALL | re.IGNORECASE)
+                  cells = [re.sub(r'<[^>]+>', '', c).strip() for c in cells]
+                  if len(cells) < 3:
+                      continue
+                  party_name = cells[0]
+                  if len(party_name) < 3 or party_name[0].isdigit():
+                      continue
+                  # Try to find won/leading numbers in subsequent cells
+                  nums = []
+                  for c in cells[1:]:
+                      try: nums.append(int(c.replace(',', '')))
+                      except: pass
+                  if len(nums) >= 2:
+                      al = alliance_of(party_name)
+                      totals[al][0] += nums[0]   # won
+                      totals[al][1] += nums[1]   # leading
+                      total_won += nums[0]
+                      matched_any = True
+
+              if not matched_any:
+                  return None
+              return {"totals": totals, "reported": total_won}
+
+          # ── Load current summary ─────────────────────────────────────────────
+          with open("data/live-summary.json") as f:
+              summary = json.load(f)
+
+          # ── Try each ECI URL ─────────────────────────────────────────────────
+          parsed = None
+          for url in ECI_URLS:
+              print(f"Trying {url}...", file=sys.stderr)
+              text = try_fetch(url)
+              if not text:
+                  continue
+              # Try JSON first
+              if url.endswith(".json"):
+                  parsed = parse_json(text)
+              else:
+                  parsed = parse_html(text)
+                  if not parsed:
+                      parsed = parse_json(text)  # some .htm return JSON
+              if parsed:
+                  print(f"Got data from {url}", file=sys.stderr)
+                  break
+
+          # ── Update summary with ECI data (or just timestamp) ─────────────────
+          summary["lastChecked"] = now_str
+
+          if parsed:
+              totals = parsed["totals"]
+              alliances = [
+                  {"name": "DMK+",    "won": totals["DMK+"][0],    "leading": totals["DMK+"][1],    "projected": 142, "range": "125–160", "color": "#3b82f6"},
+                  {"name": "AIADMK+", "won": totals["AIADMK+"][0], "leading": totals["AIADMK+"][1], "projected": 72,  "range": "55–85",   "color": "#ef4444"},
+                  {"name": "NDA",     "won": totals["NDA"][0],     "leading": totals["NDA"][1],     "projected": 20,  "range": "5–25",    "color": "#f97316"},
+                  {"name": "Others",  "won": totals["Others"][0],  "leading": totals["Others"][1],  "projected": 0,   "range": "0–5",     "color": "#64748b"},
+              ]
+              total_won = sum(a["won"] for a in alliances)
+              total_declared = sum(a["won"] for a in alliances)
+
+              summary["status"] = "declared" if total_declared >= 234 else "counting"
+              summary["reported"] = parsed["reported"]
+              summary["alliances"] = alliances
+              summary["lastUpdated"] = now_str
+              summary["note"] = f"Live results from ECI. {parsed['reported']} seats declared as of {now_str}."
+              print(f"Updated: {json.dumps({a['name']: f'{a[\"won\"]}+{a[\"leading\"]}' for a in alliances})}", file=sys.stderr)
+          else:
+              print("No ECI data available — updating timestamp only", file=sys.stderr)
+              # Keep existing data, just update the checked timestamp
+
+          with open("data/live-summary.json", "w") as f:
+              json.dump(summary, f, indent=2)
+
+          print("Done.", file=sys.stderr)
+          PYEOF
+
+      - name: Commit and push if changed
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/live-summary.json
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "Live data update $(date -u '+%Y-%m-%d %H:%M UTC')"
+            git push
+          fi
