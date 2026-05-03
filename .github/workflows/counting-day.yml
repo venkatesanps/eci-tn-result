@@ -181,18 +181,24 @@ jobs:
                   {"name": "NDA",     "won": totals["NDA"][0],     "leading": totals["NDA"][1],     "projected": 20,  "range": "5–25",    "color": "#f97316"},
                   {"name": "Others",  "won": totals["Others"][0],  "leading": totals["Others"][1],  "projected": 0,   "range": "0–5",     "color": "#64748b"},
               ]
-              total_won = sum(a["won"] for a in alliances)
-              total_declared = sum(a["won"] for a in alliances)
+              all_declared = sum(a["won"] for a in alliances) >= 234
 
-              summary["status"] = "declared" if total_declared >= 234 else "counting"
+              summary["status"] = "declared" if all_declared else "counting"
               summary["reported"] = parsed["reported"]
               summary["alliances"] = alliances
               summary["lastUpdated"] = now_str
               summary["note"] = f"Live results from ECI. {parsed['reported']} seats declared as of {now_str}."
               print(f"Updated: {json.dumps({a['name']: f'{a[\"won\"]}+{a[\"leading\"]}' for a in alliances})}", file=sys.stderr)
           else:
-              print("No ECI data available — updating timestamp only", file=sys.stderr)
-              # Keep existing data, just update the checked timestamp
+              # No ECI data yet — but if it's past 7am IST on counting day,
+              # flip to "counting" so the live section activates on the page.
+              # Data will fill in once ECI's result server responds.
+              if summary["status"] == "projected" and now_ist.hour >= 7:
+                  summary["status"] = "counting"
+                  summary["note"] = "Counting underway. Waiting for ECI result server to respond."
+                  print("No ECI data yet — switched status to counting at 7am IST", file=sys.stderr)
+              else:
+                  print("No ECI data available — keeping existing status", file=sys.stderr)
 
           with open("data/live-summary.json", "w") as f:
               json.dump(summary, f, indent=2)
