@@ -1,3 +1,239 @@
+/* ─── Hero compact variant (live mode) ──────────────────── */
+.heroLive { padding: 1.125rem 2rem 0.875rem; }
+.heroTitleLive { font-size: 1.5rem; margin-bottom: 0.375rem; }
+
+/* ─── Section compact (live mode) ───────────────────────── */
+.sectionLive { padding-top: 1rem; padding-bottom: 1.25rem; }
+
+/* ─── Compact status row ─────────────────────────────────── */
+.liveStatusRow {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.625rem;
+}
+
+/* ─── 3-col dashboard grid ───────────────────────────────── */
+.liveDashGrid {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr 1fr;
+  gap: 0.75rem;
+  align-items: start;
+}
+
+.dashCard {
+  background: #0d1525;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 10px;
+  padding: 0.875rem 1rem;
+}
+
+.dashCardFlex {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.dashCardFlex .alertFeed {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.dashColStack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+/* ─── Compact tally row ──────────────────────────────────── */
+.liveRowCompact {
+  display: grid;
+  grid-template-columns: 130px 1fr 84px;
+  gap: 0.75rem;
+  align-items: center;
+  padding: 0.5rem 0;
+  border: none;
+  border-bottom: 1px dashed rgba(255, 255, 255, 0.06);
+  width: 100%;
+  background: none;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.12s;
+  border-radius: 0;
+}
+
+.liveRowCompact:last-of-type { border-bottom: none; }
+
+.liveRowCompact:hover {
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 6px;
+  padding-left: 0.25rem;
+}
+
+.drillChevron {
+  font-size: 0.55rem;
+  color: #334155;
+  margin-left: auto;
+}
+
+.liveRowCountCompact {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.1rem;
+}
+
+/* ─── Trajectory legend ──────────────────────────────────── */
+.trajLegend {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 0.375rem;
+  flex-wrap: wrap;
+}
+
+.trajLegendItem {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.65rem;
+  color: #64748b;
+}
+
+.trajDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: inline-block;
+}
+
+/* ─── Vote share bars ────────────────────────────────────── */
+.voteShareRows {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.voteShareRow {
+  display: grid;
+  grid-template-columns: 70px 1fr 40px;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.voteShareLabel {
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.voteShareTrack {
+  height: 8px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.voteShareFill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.5s ease;
+}
+
+.voteSharePct {
+  font-family: 'IBM Plex Mono', 'Courier New', monospace;
+  font-size: 0.7rem;
+  color: #64748b;
+  text-align: right;
+}
+
+/* ─── Forecast convergence ───────────────────────────────── */
+.forecastPanels {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.forecastPanel {
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 8px;
+  padding: 0.625rem 0.625rem 0.5rem;
+}
+
+.forecastPanelLive {
+  border-color: rgba(59, 130, 246, 0.3);
+  background: rgba(59, 130, 246, 0.05);
+}
+
+.forecastLabel {
+  font-size: 0.65rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #64748b;
+  margin: 0 0 0.1rem;
+}
+
+.forecastWhen {
+  font-size: 0.6rem;
+  color: #334155;
+  margin: 0 0 0.5rem;
+}
+
+.forecastNums {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 0.5rem;
+}
+
+.forecastNum {
+  font-family: 'IBM Plex Mono', 'Courier New', monospace;
+  font-size: 1.1rem;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.03em;
+}
+
+.forecastSub {
+  font-size: 0.58rem;
+  color: #475569;
+  margin-top: 0.1rem;
+}
+
+.forecastConfTrack {
+  height: 3px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-bottom: 0.25rem;
+}
+
+.forecastConfLabel {
+  font-family: 'IBM Plex Mono', 'Courier New', monospace;
+  font-size: 0.6rem;
+  color: #475569;
+  text-align: right;
+}
+
+.forecastNote {
+  font-size: 0.68rem;
+  color: #334155;
+  margin: 0.5rem 0 0;
+}
+
+/* ─── Source attribution ─────────────────────────────────── */
+.liveSourceNote {
+  font-size: 0.68rem;
+  color: #334155;
+  margin: 0.625rem 0 0;
+  text-align: center;
+}
+
 /* ─── Live counting styles ───────────────────────────────── */
 .liveBar {
   display: inline-flex;
@@ -1065,6 +1301,20 @@
 }
 
 /* ─── Responsive (live section) ──────────────────────────── */
+@media (max-width: 900px) {
+  .liveDashGrid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .liveDashGrid > *:last-child {
+    grid-column: 1 / -1;
+  }
+
+  .forecastPanels {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
 @media (max-width: 700px) {
   .liveHeroStrip {
     grid-template-columns: 1fr 1fr;
@@ -1080,16 +1330,20 @@
     font-size: 1.5rem;
   }
 
-  .liveTallyGrid {
+  .liveDashGrid {
     grid-template-columns: 1fr;
   }
 
-  .liveRow {
-    grid-template-columns: 110px 1fr 90px;
+  .liveRowCompact {
+    grid-template-columns: 110px 1fr 75px;
   }
 
   .liveRowTotal {
     font-size: 1.25rem;
+  }
+
+  .forecastPanels {
+    grid-template-columns: 1fr;
   }
 }
 
