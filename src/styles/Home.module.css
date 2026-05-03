@@ -810,6 +810,289 @@
   margin-top: 0.375rem !important;
 }
 
+/* ─── Live counting — new design ────────────────────────── */
+
+/* Hero strip: leader + 3 stat boxes */
+.liveHeroStrip {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr 1fr 1fr;
+  gap: 1.5rem;
+  align-items: center;
+  background: #0d1525;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 12px;
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 0.875rem;
+}
+
+.liveLeaderBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.liveLeaderLabel {
+  font-size: 0.68rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #475569;
+  margin: 0;
+}
+
+.liveLeaderName {
+  font-family: 'IBM Plex Mono', 'Courier New', monospace;
+  font-size: 2rem;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1;
+  margin: 0.2rem 0 0;
+}
+
+.liveLeaderSub {
+  font-size: 0.75rem;
+  color: #475569;
+  margin: 0.2rem 0 0;
+}
+
+.liveStatBox {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.liveStatBox b {
+  display: block;
+  font-family: 'IBM Plex Mono', 'Courier New', monospace;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #e2e8f0;
+}
+
+.liveStatBox span {
+  font-size: 0.62rem;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  color: #475569;
+}
+
+/* Tally + alerts grid */
+.liveTallyGrid {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr;
+  gap: 1rem;
+  margin-bottom: 0;
+}
+
+/* Shared card for tally and alerts */
+.tallyCard {
+  background: #0d1525;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 12px;
+  padding: 1.125rem 1.25rem;
+}
+
+.cardH {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.75rem;
+  margin-bottom: 0.875rem;
+}
+
+.cardTitle {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #e2e8f0;
+  margin: 0;
+}
+
+.cardSub {
+  font-size: 0.72rem;
+  color: #334155;
+}
+
+/* Tally rows */
+.tallyRows {
+  display: flex;
+  flex-direction: column;
+}
+
+.liveRow {
+  display: grid;
+  grid-template-columns: 140px 1fr 110px;
+  gap: 1rem;
+  align-items: center;
+  padding: 0.875rem 0;
+  border-bottom: 1px dashed rgba(255, 255, 255, 0.06);
+}
+
+.liveRow:last-of-type {
+  border-bottom: none;
+}
+
+.liveRowName {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  font-size: 0.825rem;
+  font-weight: 600;
+  color: #e2e8f0;
+  min-width: 0;
+}
+
+.liveRowDot {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+/* Dual bar: transparent leading overlay + solid won fill */
+.liveRowBarBg {
+  height: 14px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 4px;
+  position: relative;
+  overflow: hidden;
+}
+
+.liveRowBarLeading {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  border-radius: 4px;
+  opacity: 0.32;
+  transition: width 0.7s ease;
+}
+
+.liveRowBarWon {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.7s ease;
+}
+
+/* Seat count numbers */
+.liveRowCount {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.15rem;
+}
+
+.liveRowTotal {
+  font-family: 'IBM Plex Mono', 'Courier New', monospace;
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.03em;
+}
+
+.liveRowDetail {
+  font-size: 0.65rem;
+  color: #475569;
+  white-space: nowrap;
+}
+
+.tallyFooter {
+  display: flex;
+  justify-content: space-between;
+  padding-top: 0.75rem;
+  margin-top: 0.375rem;
+  font-size: 0.72rem;
+  color: #334155;
+  border-top: 1px dashed rgba(255, 255, 255, 0.06);
+}
+
+/* Alert feed */
+.alertFeed {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-height: 300px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255,255,255,0.08) transparent;
+}
+
+.alertEmpty {
+  font-size: 0.8rem;
+  color: #334155;
+  margin: 0;
+  font-style: italic;
+}
+
+.alertItem {
+  padding: 0.625rem 0.875rem;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.03);
+  border-left: 3px solid #334155;
+}
+
+.alertTime {
+  font-family: 'IBM Plex Mono', 'Courier New', monospace;
+  font-size: 0.62rem;
+  color: #475569;
+  margin-bottom: 0.2rem;
+}
+
+.alertText {
+  font-size: 0.8rem;
+  color: #94a3b8;
+  line-height: 1.45;
+}
+
+.alertWin {
+  border-left-color: #10b981;
+  background: rgba(16, 185, 129, 0.06);
+}
+
+.alertWin .alertText {
+  color: #6ee7b7;
+}
+
+.alertSwing {
+  border-left-color: #d97706;
+  background: rgba(217, 119, 6, 0.06);
+}
+
+.alertInfo {
+  border-left-color: #475569;
+}
+
+/* ─── Responsive (live section) ──────────────────────────── */
+@media (max-width: 700px) {
+  .liveHeroStrip {
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    padding: 1rem 1.125rem;
+  }
+
+  .liveLeaderBlock {
+    grid-column: 1 / -1;
+  }
+
+  .liveLeaderName {
+    font-size: 1.5rem;
+  }
+
+  .liveTallyGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .liveRow {
+    grid-template-columns: 110px 1fr 90px;
+  }
+
+  .liveRowTotal {
+    font-size: 1.25rem;
+  }
+}
+
 /* ─── Responsive ─────────────────────────────────────────── */
 @media (max-width: 700px) {
   .nav {
