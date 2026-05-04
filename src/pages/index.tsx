@@ -68,19 +68,21 @@ const ELECTIONS: Record<string, Election> = {
     context: 'AIADMK swept to a historic 203-seat landslide under J. Jayalalithaa. DMK suffered its worst-ever defeat winning only 23 seats — down from 163 in 2006. Anti-incumbency over the 2G spectrum scandal.',
   },
   '2026': {
-    year: '2026', date: 'Expected April–May 2026', totalSeats: 234, majority: 118,
-    status: 'Projected — Not Declared', winner: 'To be declared',
-    turnout: 'Expected ~72–75%', isProjected: true,
-    projectedNote: 'Official results not declared. Figures below are pre-election survey midpoints.',
+    year: '2026', date: 'Voted April 23 · Counting May 4', totalSeats: 234, majority: 118,
+    status: 'Counting Day — May 4, 2026', winner: 'To be declared',
+    turnout: 'Reported ~72–74%', isProjected: true,
+    projectedNote: 'Official results not yet declared. Seat ranges from pre-poll surveys across 5 agencies.',
     alliances: [
-      { name: 'DMK+', seats: 142, share: 44.0, color: '#3b82f6', isWinner: false, range: '125–160',
-        parties: ['DMK', 'INC', 'VCK', 'CPI', 'CPM', 'Others'] },
-      { name: 'AIADMK+', seats: 72, share: 37.5, color: '#ef4444', isWinner: false, range: '55–85',
-        parties: ['AIADMK', 'Allied regional parties'] },
-      { name: 'NDA', seats: 20, share: 11.5, color: '#f97316', isWinner: false, range: '5–25',
-        parties: ['BJP', 'PMK', 'Allied parties'] },
+      { name: 'DMK+ (SPA)',      seats: 118, share: 39.0, color: '#3b82f6', isWinner: false, range: '104–135',
+        parties: ['DMK', 'INC', 'VCK', 'CPI', 'CPM', 'DMDK', 'IUML', 'Others'] },
+      { name: 'NDA (AIADMK+)',   seats: 100, share: 38.0, color: '#ef4444', isWinner: false, range: '82–127',
+        parties: ['AIADMK', 'BJP', 'PMK', 'AMMK'] },
+      { name: 'TVK',             seats: 12,  share: 15.0, color: '#a855f7', isWinner: false, range: '6–18',
+        parties: ['Tamilaga Vettri Kazhagam (Vijay)'] },
+      { name: 'NTK + Others',    seats: 4,   share: 8.0,  color: '#64748b', isWinner: false, range: '0–6',
+        parties: ['NTK (Seeman)', 'Independents', 'Minor parties'] },
     ],
-    context: 'Tamil Nadu assembly elections expected April–May 2026. DMK under CM M.K. Stalin seeks second term. AIADMK remains main opposition. BJP-led NDA aims to expand in Dravidian-dominated TN politics.',
+    context: 'First 4-way contest since 1977. TVK (Vijay\'s Tamilaga Vettri Kazhagam) and NTK contest all 234 seats, splitting the non-DMK vote. AIADMK joined BJP\'s NDA. DMK seeks a rare consecutive win — last achieved in 1962.',
   },
 };
 
@@ -96,10 +98,24 @@ const SHARE_HISTORY = [
 ];
 const YEARS = ['2011', '2016', '2021', '2026'];
 const VOTE_SHARES = [
-  { name: 'DMK+',    pct: 44.0, color: '#3b82f6' },
-  { name: 'AIADMK+', pct: 37.5, color: '#ef4444' },
-  { name: 'NDA',     pct: 11.5, color: '#f97316' },
-  { name: 'Others',  pct:  7.0, color: '#64748b' },
+  { name: 'DMK+ (SPA)',    pct: 39.0, color: '#3b82f6' },
+  { name: 'NDA (AIADMK+)', pct: 38.0, color: '#ef4444' },
+  { name: 'TVK',           pct: 15.0, color: '#a855f7' },
+  { name: 'NTK + Others',  pct:  8.0, color: '#64748b' },
+];
+
+// Pre-poll survey aggregation from 5 agencies (seats out of 234, majority = 118)
+const PRE_POLLS = [
+  { agency: 'Lok Poll',       date: 'Mar 31', spa: '125–135', nda: '82–92',  tvk: '10–16', oth: '2–5'  },
+  { agency: 'O&R-CVoter',    date: 'Mar 27', spa: '108–118', nda: '100–112', tvk: '12–18', oth: '0–4'  },
+  { agency: 'News18-VoteVibe',date: 'Mar 22', spa: '113–123', nda: '106–116', tvk: '2–8',  oth: '0–7'  },
+  { agency: 'IANS-Matrize',   date: 'Mar 14', spa: '104–114', nda: '114–127', tvk: '6–12',  oth: '1–6'  },
+];
+
+const KEY_INSIGHTS = [
+  { icon: '⚡', text: 'First 4-way contest since 1977 — SPA, NDA, TVK, NTK all contest 234 seats' },
+  { icon: '⭐', text: 'TVK (Vijay\'s party) on debut. Vote-split could hand seats to either DMK+ or AIADMK+' },
+  { icon: '📊', text: 'DMK seeks back-to-back win — last achieved in 1962. Anti-incumbency historically ~5 pp swing' },
 ];
 const TOOLTIP_STYLE = {
   contentStyle: { background: '#1e293b', border: '1px solid #334155', borderRadius: 8, fontSize: 12 },
@@ -203,6 +219,16 @@ export default function Home() {
             <a href="#history" onClick={() => setShowHistory(true)}>History</a>
             <a href="#outlook">2026</a>
           </div>
+          <button className={styles.shareBtn} onClick={() => {
+            if (navigator.share) {
+              navigator.share({ title: 'TN Elections 2026', url: window.location.href });
+            } else {
+              navigator.clipboard.writeText(window.location.href);
+              alert('Link copied!');
+            }
+          }}>
+            ↗ Share
+          </button>
         </nav>
 
         {/* ── HERO — compact when live ── */}
@@ -224,6 +250,18 @@ export default function Home() {
             </div>
           )}
         </header>
+
+        {/* ── KEY INSIGHTS (2026 only) ── */}
+        {selectedYear === '2026' && !isLive && (
+          <div className={styles.insightsStrip}>
+            {KEY_INSIGHTS.map((k, i) => (
+              <div key={i} className={styles.insightItem}>
+                <span className={styles.insightIcon}>{k.icon}</span>
+                <span className={styles.insightText}>{k.text}</span>
+              </div>
+            ))}
+          </div>
+        )}
 
         {/* ── YEAR TABS ── */}
         <div className={styles.yearSection}>
@@ -581,6 +619,38 @@ export default function Home() {
                   <p className={styles.sourceNote}>Source: Election Commission of India — eci.gov.in</p>
                 )}
               </div>
+
+              {/* Pre-poll survey table — 2026 only */}
+              {selectedYear === '2026' && (
+                <div className={styles.prePollCard}>
+                  <div className={styles.cardH}>
+                    <h3 className={styles.cardTitle}>Pre-Poll Surveys</h3>
+                    <span className={styles.cardSub}>Projected seats out of 234 · Majority: 118</span>
+                  </div>
+                  <div className={styles.prePollTable}>
+                    <div className={styles.prePollHead}>
+                      <span>Agency</span><span>Date</span>
+                      <span style={{ color: '#3b82f6' }}>DMK+ (SPA)</span>
+                      <span style={{ color: '#ef4444' }}>NDA (AIADMK+)</span>
+                      <span style={{ color: '#a855f7' }}>TVK</span>
+                      <span>Others</span>
+                    </div>
+                    {PRE_POLLS.map(p => (
+                      <div key={p.agency} className={styles.prePollRow}>
+                        <span className={styles.prePollAgency}>{p.agency}</span>
+                        <span className={styles.prePollDate}>{p.date}</span>
+                        <span style={{ color: '#3b82f6', fontFamily: "'IBM Plex Mono',monospace" }}>{p.spa}</span>
+                        <span style={{ color: '#ef4444', fontFamily: "'IBM Plex Mono',monospace" }}>{p.nda}</span>
+                        <span style={{ color: '#a855f7', fontFamily: "'IBM Plex Mono',monospace" }}>{p.tvk}</span>
+                        <span className={styles.prePollDate}>{p.oth}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <p className={styles.prePollNote}>
+                    Sources: Lok Poll (Oneindia), O&R-CVoter, News18-VoteVibe, IANS-Matrize. Seat projections are pre-poll estimates only.
+                  </p>
+                </div>
+              )}
             </>
             )}
           </div>

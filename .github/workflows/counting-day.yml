@@ -42,32 +42,35 @@ jobs:
               "https://results.eci.gov.in/Result2026/partywiseresult-S26.htm",
           ]
 
-          # Alliance membership mapping
-          DMK_PLUS = {
+          # Alliance membership mapping (2026: AIADMK joined BJP NDA; TVK new standalone)
+          DMK_PLUS_PARTIES = {
               "Dravida Munnetra Kazhagam", "DMK",
               "Indian National Congress", "INC",
               "Viduthalai Chiruthaigal Katchi", "VCK",
               "Communist Party of India", "CPI",
               "Communist Party of India  (Marxist)", "CPM",
               "Communist Party of India (Marxist)", "CPM",
+              "MDMK", "IUML",
           }
-          AIADMK_PLUS = {
+          AIADMK_NDA_PARTIES = {
               "All India Anna Dravida Munnetra Kazhagam", "AIADMK",
-          }
-          NDA = {
               "Bharatiya Janata Party", "BJP",
               "Pattali Makkal Katchi", "PMK",
+              "Amma Makkal Munnetra Kazhagam", "AMMK",
+          }
+          TVK_PARTIES = {
+              "Tamilaga Vettri Kazhagam", "TVK",
           }
 
           def alliance_of(party_name: str) -> str:
               n = party_name.strip()
-              if n in DMK_PLUS or any(k in n for k in ["Dravida Munnetra", "Indian National Congress", "Viduthalai"]):
-                  return "DMK+"
-              if n in AIADMK_PLUS or "Anna Dravida" in n:
-                  return "AIADMK+"
-              if n in NDA or "Bharatiya Janata" in n or "Pattali Makkal" in n:
-                  return "NDA"
-              return "Others"
+              if n in TVK_PARTIES or "Tamilaga Vettri" in n or n == "TVK":
+                  return "TVK"
+              if n in DMK_PLUS_PARTIES or any(k in n for k in ["Dravida Munnetra", "Indian National Congress", "Viduthalai"]):
+                  return "DMK+ (SPA)"
+              if n in AIADMK_NDA_PARTIES or "Anna Dravida" in n or "Bharatiya Janata" in n or "Pattali Makkal" in n:
+                  return "NDA (AIADMK+)"
+              return "NTK + Others"
 
           def try_fetch(url: str) -> str | None:
               try:
@@ -97,7 +100,7 @@ jobs:
                   if parties is None:
                       return None
 
-                  totals = {"DMK+": [0,0], "AIADMK+": [0,0], "NDA": [0,0], "Others": [0,0]}
+                  totals = {"DMK+ (SPA)": [0,0], "NDA (AIADMK+)": [0,0], "TVK": [0,0], "NTK + Others": [0,0]}
                   reported = 0
                   for p in parties:
                       name = p.get("party_name") or p.get("name") or p.get("Party") or ""
@@ -114,7 +117,7 @@ jobs:
 
           def parse_html(html: str) -> dict | None:
               # Look for number patterns near party names in ECI HTML tables
-              totals = {"DMK+": [0,0], "AIADMK+": [0,0], "NDA": [0,0], "Others": [0,0]}
+              totals = {"DMK+ (SPA)": [0,0], "NDA (AIADMK+)": [0,0], "TVK": [0,0], "NTK + Others": [0,0]}
 
               # Try to find table rows with pattern: party name | won | leading
               # ECI uses various HTML structures; try a flexible regex
@@ -176,10 +179,10 @@ jobs:
           if parsed:
               totals = parsed["totals"]
               alliances = [
-                  {"name": "DMK+",    "won": totals["DMK+"][0],    "leading": totals["DMK+"][1],    "projected": 142, "range": "125–160", "color": "#3b82f6"},
-                  {"name": "AIADMK+", "won": totals["AIADMK+"][0], "leading": totals["AIADMK+"][1], "projected": 72,  "range": "55–85",   "color": "#ef4444"},
-                  {"name": "NDA",     "won": totals["NDA"][0],     "leading": totals["NDA"][1],     "projected": 20,  "range": "5–25",    "color": "#f97316"},
-                  {"name": "Others",  "won": totals["Others"][0],  "leading": totals["Others"][1],  "projected": 0,   "range": "0–5",     "color": "#64748b"},
+                  {"name": "DMK+ (SPA)",    "won": totals["DMK+ (SPA)"][0],    "leading": totals["DMK+ (SPA)"][1],    "projected": 118, "range": "104–135", "color": "#3b82f6"},
+                  {"name": "NDA (AIADMK+)", "won": totals["NDA (AIADMK+)"][0], "leading": totals["NDA (AIADMK+)"][1], "projected": 100, "range": "82–127",  "color": "#ef4444"},
+                  {"name": "TVK",           "won": totals["TVK"][0],           "leading": totals["TVK"][1],           "projected": 12,  "range": "6–18",    "color": "#a855f7"},
+                  {"name": "NTK + Others",  "won": totals["NTK + Others"][0],  "leading": totals["NTK + Others"][1],  "projected": 4,   "range": "0–6",     "color": "#64748b"},
               ]
               all_declared = sum(a["won"] for a in alliances) >= 234
 
