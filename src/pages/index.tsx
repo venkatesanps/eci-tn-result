@@ -135,12 +135,15 @@ export default function Home() {
   const [alerts, setAlerts]                 = useState<AlertItem[]>([]);
   const prevLiveRef   = useRef<LiveSummary | null>(null);
   const milestonesRef = useRef<Set<string>>(new Set());
+  const fetchLiveRef  = useRef<(() => Promise<void>) | null>(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   // ── 30s live polling ────────────────────────────────────────────────────
   useEffect(() => {
     if (selectedYear !== '2026') return;
     const BASE = process.env.NEXT_PUBLIC_BASE_PATH ?? '';
     const fetchLive = async () => {
+      setIsRefreshing(true);
       try {
         const res = await fetch(`${BASE}/data/live-summary.json?t=${Date.now()}`);
         if (!res.ok) return;
@@ -177,7 +180,9 @@ export default function Home() {
         }
         prevLiveRef.current = data;
       } catch { /* keep */ }
+      setIsRefreshing(false);
     };
+    fetchLiveRef.current = fetchLive;
     fetchLive();
     const id = setInterval(fetchLive, 30_000);
     return () => clearInterval(id);
@@ -247,6 +252,12 @@ export default function Home() {
                 {live.reported}/{live.totalSeats} seats reported · Page checks every 30 s
                 {lastPolled && ` · Last: ${lastPolled} IST`}
               </span>
+              <button
+                style={{ background: 'none', border: 'none', color: '#10b981', cursor: 'pointer', fontSize: '1rem', padding: '0 0.125rem', opacity: isRefreshing ? 0.4 : 1, lineHeight: 1 }}
+                onClick={() => fetchLiveRef.current?.()}
+                disabled={isRefreshing}
+                title="Refresh now"
+              >{isRefreshing ? '…' : '↻'}</button>
             </div>
           )}
         </header>
@@ -289,18 +300,20 @@ export default function Home() {
               const leader    = liveLeader();
               const pctDone   = Math.round((live.reported / live.totalSeats) * 100);
               const progress  = live.reported / live.totalSeats;
-              const dmkLive   = live.alliances.find(a => a.name === 'DMK+');
-              const aiLive    = live.alliances.find(a => a.name === 'AIADMK+');
+              const dmkLive   = live.alliances.find(a => a.name === 'DMK+ (SPA)');
+              const aiLive    = live.alliances.find(a => a.name === 'NDA (AIADMK+)');
+              const tvkLive   = live.alliances.find(a => a.name === 'TVK');
               const dmkTotal  = dmkLive ? dmkLive.won + dmkLive.leading : 0;
               const aiTotal   = aiLive  ? aiLive.won  + aiLive.leading  : 0;
+              const tvkTotal  = tvkLive ? tvkLive.won + tvkLive.leading : 0;
               const conf      = Math.round(50 + progress * 44);
               const leaderTotal = leader ? leader.won + leader.leading : 0;
               const hasMaj    = !!leader && leader.won >= live.majority;
 
               const forecastPanels = [
-                { label: 'Pre-poll',  when: 'Survey avg', dmk: 142, ai: 72, conf: 52, active: false },
-                { label: 'Updated',   when: 'May 1',      dmk: 148, ai: 80, conf: 66, active: false },
-                { label: 'Live',      when: 'Now',        dmk: dmkTotal, ai: aiTotal, conf, active: true },
+                { label: 'Pre-poll',  when: 'Survey avg', dmk: 118, ai: 100, tvk: 12, conf: 60, active: false },
+                { label: 'Latest',    when: 'Apr 28',     dmk: 115, ai: 103, tvk: 13, conf: 74, active: false },
+                { label: 'Live',      when: 'Now',        dmk: dmkTotal, ai: aiTotal, tvk: tvkTotal, conf, active: true },
               ];
 
               return (
@@ -400,6 +413,11 @@ export default function Home() {
                           </div>
                         );
                       })}
+                      {live.reported === 0 && live.status === 'counting' && (
+                        <p style={{ fontSize: '0.72rem', color: '#475569', padding: '0.5rem 0', textAlign: 'center', margin: 0 }}>
+                          Counting started — awaiting first results from ECI
+                        </p>
+                      )}
                       <div className={styles.tallyFooter}>
                         <span>Majority: {live.majority}</span>
                         <span>{live.totalSeats - live.reported} counting</span>
@@ -490,11 +508,15 @@ export default function Home() {
                               <div className={styles.forecastNums}>
                                 <div>
                                   <div className={styles.forecastNum} style={{ color: '#3b82f6' }}>{p.dmk}</div>
-                                  <div className={styles.forecastSub}>DMK+</div>
+                                  <div className={styles.forecastSub}>SPA</div>
+                                </div>
+                                <div style={{ textAlign: 'center' }}>
+                                  <div className={styles.forecastNum} style={{ color: '#a855f7' }}>{p.tvk}</div>
+                                  <div className={styles.forecastSub}>TVK</div>
                                 </div>
                                 <div style={{ textAlign: 'right' }}>
                                   <div className={styles.forecastNum} style={{ color: '#ef4444' }}>{p.ai}</div>
-                                  <div className={styles.forecastSub}>AIADMK+</div>
+                                  <div className={styles.forecastSub}>NDA</div>
                                 </div>
                               </div>
                               <div className={styles.forecastConfTrack}>

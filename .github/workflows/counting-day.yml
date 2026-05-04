@@ -35,11 +35,24 @@ jobs:
           now_str = now_ist.strftime("%Y-%m-%dT%H:%M:%S+05:30")
 
           # ── Candidate ECI result endpoints (Tamil Nadu state code S26) ──────────
+          # ECI changes folder names each election — try all known patterns
           ECI_URLS = [
+              # Pattern 1: Result2026 (most likely)
               "https://results.eci.gov.in/Result2026/StatewiseS26.json",
-              "https://results.eci.gov.in/Result2026/StatewiseS26.htm",
-              "https://results.eci.gov.in/Result2026/StatewiseU05.htm",
               "https://results.eci.gov.in/Result2026/partywiseresult-S26.htm",
+              "https://results.eci.gov.in/Result2026/StatewiseS26.htm",
+              # Pattern 2: AcResultState + month (used in Dec 2023 elections)
+              "https://results.eci.gov.in/AcResultStateApr2026/StatewiseS26.json",
+              "https://results.eci.gov.in/AcResultStateApr2026/partywiseresult-S26.htm",
+              "https://results.eci.gov.in/AcResultStateApr2026/StatewiseS26.htm",
+              # Pattern 3: AcResultStateApril (full month name variant)
+              "https://results.eci.gov.in/AcResultStateApril2026/StatewiseS26.json",
+              "https://results.eci.gov.in/AcResultStateApril2026/partywiseresult-S26.htm",
+              # Pattern 4: AcResultGen style (used for 2024 general election)
+              "https://results.eci.gov.in/AcResultGenApril2026/StatewiseS26.json",
+              "https://results.eci.gov.in/AcResultGenApril2026/partywiseresult-S26.htm",
+              # Pattern 5: Fallback Puducherry (U05) which votes same day
+              "https://results.eci.gov.in/Result2026/StatewiseU05.htm",
           ]
 
           # Alliance membership mapping (2026: AIADMK joined BJP NDA; TVK new standalone)
