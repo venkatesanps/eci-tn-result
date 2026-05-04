@@ -1,0 +1,29 @@
+[
+  {
+    "slug": "dmk",
+    "name": "DMK+",
+    "seats": 126,
+    "voteShare": 42.5,
+    "momentum": 0.76,
+    "summary": "Front-runner alliance with strong growth across urban and rural constituencies.",
+    "description": "The DMK-led alliance is currently ahead in seat count and vote share, showing momentum across key districts."
+  },
+  {
+    "slug": "aiadmk",
+    "name": "AIADMK+",
+    "seats": 68,
+    "voteShare": 35.8,
+    "momentum": -0.34,
+    "summary": "Main opposition alliance with a focus on retaining traditional strongholds.",
+    "description": "AIADMK remains the principal opposition force, seeking to consolidate remaining constituencies and boost vote share."
+  },
+  {
+    "slug": "others",
+    "name": "Others",
+    "seats": 20,
+    "voteShare": 21.7,
+    "momentum": 0.05,
+    "summary": "Smaller parties and independents shaping the final balance of power.",
+    "description": "Multiple regional parties and independents are influencing the race, especially in close contests."
+  }
+]

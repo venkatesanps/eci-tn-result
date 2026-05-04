@@ -1,0 +1,14 @@
+[
+  { "name": "Chennai Central", "party": "DMK+", "winner": "DMK", "margin": 12.4, "turnout": 68.3, "region": "Chennai", "status": "declared" },
+  { "name": "Coimbatore South", "party": "AIADMK+", "winner": "AIADMK", "margin": 4.9, "turnout": 72.6, "region": "Western TN", "status": "tight race" },
+  { "name": "Madurai North", "party": "DMK+", "winner": "DMK", "margin": 8.1, "turnout": 69.7, "region": "Southern TN", "status": "declared" },
+  { "name": "Trichy West", "party": "Others", "winner": "Independent", "margin": 3.2, "turnout": 66.5, "region": "Central TN", "status": "counting" },
+  { "name": "Salem North", "party": "AIADMK+", "winner": "AIADMK", "margin": 6.0, "turnout": 70.2, "region": "Western TN", "status": "declared" },
+  { "name": "Tiruppur", "party": "DMK+", "winner": "DMK", "margin": 9.5, "turnout": 71.1, "region": "Western TN", "status": "declared" },
+  { "name": "Kanyakumari", "party": "Others", "winner": "MDMK", "margin": 3.8, "turnout": 74.0, "region": "Southern TN", "status": "tight race" },
+  { "name": "Chengalpattu", "party": "DMK+", "winner": "DMK", "margin": 11.2, "turnout": 67.9, "region": "Chennai Metro", "status": "declared" },
+  { "name": "Vellore", "party": "AIADMK+", "winner": "AIADMK", "margin": 5.7, "turnout": 68.8, "region": "Northern TN", "status": "counting" },
+  { "name": "Nagercoil", "party": "DMK+", "winner": "DMK", "margin": 7.3, "turnout": 72.4, "region": "Southern TN", "status": "declared" },
+  { "name": "Erode East", "party": "AIADMK+", "winner": "AIADMK", "margin": 3.1, "turnout": 69.0, "region": "Western TN", "status": "counting" },
+  { "name": "Tiruchendur", "party": "Others", "winner": "DMDK", "margin": 2.8, "turnout": 70.5, "region": "Southern TN", "status": "tight race" }
+]
